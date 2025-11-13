@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -79,7 +80,7 @@ return (
                 onChange={handleChange}
                 required
                 placeholder="your@email.com"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             </div>
         </div>
@@ -97,7 +98,7 @@ return (
                 onChange={handleChange}
                 required
                 placeholder="••••••••"
-                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-12 py-3 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-transparent"
             />
             <button
                 type="button"
@@ -130,10 +131,10 @@ return (
 
         <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
-            {/* Don't have an account?{' '} */}
-            <a href="auth/register" className="text-blue-600 hover:text-blue-700 font-semibold">
-            Sign up here
-            </a>
+            Don&apos;t have an account?{' '}
+            <Link href="auth/register" className="text-blue-600 hover:text-blue-700 font-semibold">
+            Sign up
+            </Link>
         </p>
         </div>
     </div>

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { requireAuth } from '@/lib/apiAuth';
 import connectDB from '@/lib/mongodb';
 import Menu from '@/schemas/Menu';
 import { cache } from '@/lib/redis';
@@ -8,10 +7,8 @@ import { cache } from '@/lib/redis';
 // GET - Fetch all menu items
 export async function GET(request) {
 try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const session = await requireAuth(request);
+    if (session instanceof NextResponse) return session;
 
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
@@ -56,10 +53,8 @@ try {
 // POST - Create new menu item
 export async function POST(request) {
 try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const session = await requireAuth(request);
+    if (session instanceof NextResponse) return session;
 
     await connectDB();
 

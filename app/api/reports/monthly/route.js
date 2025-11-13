@@ -1,16 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { requireAuth } from '@/lib/apiAuth';
 import connectDB from '@/lib/mongodb';
 import Order from '@/schemas/Order';
 import { cache } from '@/lib/redis';
 
 export async function GET(request) {
 try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const session = await requireAuth(request);
+    if (session instanceof NextResponse) return session;
 
     const { searchParams } = new URL(request.url);
     const month = searchParams.get('month'); // Format: YYYY-MM
@@ -40,7 +37,7 @@ try {
     });
 
     const daysInMonth = endDate.getDate();
-    const dailyRevenue = Array(daysInMonth).fill(0);
+    const dailyRevenue = new Array(daysInMonth).fill(0);
 
     const report = {
         month,
@@ -54,28 +51,28 @@ try {
         paymentMethodBreakdown: {},
     };
 
-    orders.forEach(order => {
+    for (const order of orders) {
         report.totalRevenue += order.total;
         report.totalTax += order.tax;
         report.totalDiscount += order.discount;
 
-    // Daily revenue
-    const day = new Date(order.createdAt).getDate() - 1;
-    dailyRevenue[day] += order.total;
+        // Daily revenue
+        const day = new Date(order.createdAt).getDate() - 1;
+        dailyRevenue[day] += order.total;
 
-    // Payment methods
-    report.paymentMethodBreakdown[order.paymentMethod] = 
-        (report.paymentMethodBreakdown[order.paymentMethod] || 0) + order.total;
+        // Payment methods
+        report.paymentMethodBreakdown[order.paymentMethod] = 
+            (report.paymentMethodBreakdown[order.paymentMethod] || 0) + order.total;
 
-    // Top products
-    order.items.forEach(item => {
-        if (!report.topProducts[item.name]) {
-            report.topProducts[item.name] = { quantity: 0, revenue: 0 };
+        // Top products
+        for (const item of order.items) {
+            if (!report.topProducts[item.name]) {
+                report.topProducts[item.name] = { quantity: 0, revenue: 0 };
+            }
+            report.topProducts[item.name].quantity += item.quantity;
+            report.topProducts[item.name].revenue += item.subtotal;
         }
-        report.topProducts[item.name].quantity += item.quantity;
-        report.topProducts[item.name].revenue += item.subtotal;
-    });
-    });
+    }
 
     report.averageOrderValue = report.totalOrders > 0 
     ? report.totalRevenue / report.totalOrders 

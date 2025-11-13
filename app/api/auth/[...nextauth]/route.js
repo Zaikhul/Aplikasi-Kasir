@@ -13,24 +13,43 @@ providers: [
         },
 
     async authorize(credentials) {
-        await connectDB();
+        try {
+            await connectDB();
 
-        const user = await User.findOne({ email: credentials.email });
+            const email = (credentials?.email || '').toLowerCase().trim();
+            const password = credentials?.password || '';
+
+            if (!email || !password) {
+                // return null to indicate failed auth (NextAuth shows generic error)
+                return null;
+            }
+
+            const emailRegex = /^(?:[a-zA-Z0-9_'^&/+-])+(?:\.(?:[a-zA-Z0-9_'^&/+-])+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(email)) return null;
+
+            const user = await User.findOne({ email });
             if (!user) {
-                throw new Error('Invalid email or password');
+                return null;
             }
-        const isValid = await user.comparePassword(credentials.password);
+
+            const isValid = await user.comparePassword(password);
             if (!isValid) {
-                throw new Error('Invalid email or password');
+                return null;
             }
-        return {
-            id: user._id.toString(),
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            subscription: user.subscription,
-        };
-    },}),
+
+            return {
+                id: user._id.toString(),
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                subscription: user.subscription,
+            };
+        } catch (err) {
+            console.error('Authorize error:', err);
+            return null;
+        }
+    },
+  }),
 ],
 
 callbacks: {

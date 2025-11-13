@@ -1,8 +1,6 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { Edit2, Trash2, Plus } from 'lucide-react';
-import MenuForm from './MenuForm';
+import MenuForm from './menu';
 
 export default function MenuList() {
     const [menuItems, setMenuItems] = useState([]);

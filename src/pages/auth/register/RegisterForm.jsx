@@ -1,7 +1,5 @@
-'use client';
-
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { Mail, Lock, User, Building, Eye, EyeOff, UserPlus } from 'lucide-react';
 
 export default function RegisterForm() {
@@ -49,6 +47,9 @@ try {
 
     if (response.ok) {
         router.push('/login?registered=true');
+    } else if (data?.errors && typeof data.errors === 'object') {
+        // Prefer field errors if present
+        setError(Object.values(data.errors).join('. '));
     } else {
         setError(data.error || 'Registration failed');
     }
@@ -67,7 +68,7 @@ const handleChange = (e) => {
 };
 
 return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 p-4">
     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
         <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
@@ -85,13 +86,14 @@ return (
 
         <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
             Full Name *
             </label>
             <div className="relative">
             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
                 type="text"
+                id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
@@ -103,13 +105,14 @@ return (
         </div>
 
         <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
             Email Address *
             </label>
             <div className="relative">
             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
                 type="email"
+                id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
@@ -121,13 +124,14 @@ return (
         </div>
 
         <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label htmlFor="businessName" className="block text-sm font-semibold text-gray-700 mb-2">
             Business Name (Optional)
             </label>
             <div className="relative">
             <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
                 type="text"
+                id="businessName"
                 name="businessName"
                 value={formData.businessName}
                 onChange={handleChange}
@@ -138,13 +142,14 @@ return (
         </div>
 
         <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
             Password *
             </label>
             <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
                 type={showPassword ? 'text' : 'password'}
+                id="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
@@ -163,13 +168,14 @@ return (
         </div>
 
         <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-2">
             Confirm Password *
             </label>
             <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
                 type={showPassword ? 'text' : 'password'}
+                id="confirmPassword"
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}

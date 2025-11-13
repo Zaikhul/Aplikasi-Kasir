@@ -1,9 +1,8 @@
-'use client';
-
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
-import { X, Upload } from 'lucide-react';
+import { X } from 'lucide-react';
 
-export default function MenuForm({ item, onClose }) {
+function MenuForm({ item, onClose }) {
 const [formData, setFormData] = useState({
     name: item?.name || '',
     description: item?.description || '',
@@ -15,6 +14,7 @@ const [formData, setFormData] = useState({
 });
 const [imageFile, setImageFile] = useState(null);
 const [loading, setLoading] = useState(false);
+const [error, setError] = useState('');
 
 const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,6 +35,11 @@ try {
 
         if (uploadResponse.ok) {
         imageData = await uploadResponse.json();
+        } else {
+        const uploadError = await uploadResponse.json();
+        setError(uploadError.error || 'Failed to upload image');
+        setLoading(false);
+        return;
         }
     }
 
@@ -46,18 +51,21 @@ try {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
         ...formData,
-        price: parseFloat(formData.price),
-        stock: parseInt(formData.stock),
+        price: Number.parseFloat(formData.price),
+        stock: Number.parseInt(formData.stock, 10),
         image: imageData,
         }),
     });
 
     if (response.ok) {
         onClose();
+    } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to save menu item');
     }
-    } catch (error) {
-        console.error('Failed to save menu item:', error);
-        alert('Failed to save menu item');
+    } catch (err) {
+        console.error('Failed to save menu item:', err);
+        setError('An error occurred. Please try again.');
     } finally {
         setLoading(false);
     }
@@ -87,10 +95,17 @@ return (
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+                <p className="font-semibold">Error</p>
+                <p className="text-sm">{error}</p>
+            </div>
+            )}
         <div>
-            <label className="block text-sm font-medium mb-1">Name *</label>
+            <label htmlFor="name" className="block text-sm font-medium mb-1">Name *</label>
             <input
             type="text"
+            id="name"
             name="name"
             value={formData.name}
             onChange={handleChange}
@@ -100,8 +115,9 @@ return (
         </div>
 
         <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
+            <label htmlFor="description" className="block text-sm font-medium mb-1">Description</label>
             <textarea
+            id="description"
             name="description"
             value={formData.description}
             onChange={handleChange}
@@ -112,9 +128,10 @@ return (
 
         <div className="grid grid-cols-2 gap-4">
             <div>
-            <label className="block text-sm font-medium mb-1">Price (Rp) *</label>
+            <label htmlFor="price" className="block text-sm font-medium mb-1">Price (Rp) *</label>
             <input
                 type="number"
+                id="price"
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
@@ -126,8 +143,9 @@ return (
             </div>
 
             <div>
-            <label className="block text-sm font-medium mb-1">Category *</label>
+            <label htmlFor="category" className="block text-sm font-medium mb-1">Category *</label>
             <select
+                id="category"
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
@@ -144,9 +162,10 @@ return (
 
         <div className="grid grid-cols-2 gap-4">
             <div>
-            <label className="block text-sm font-medium mb-1">Stock</label>
+            <label htmlFor="stock" className="block text-sm font-medium mb-1">Stock</label>
             <input
                 type="number"
+                id="stock"
                 name="stock"
                 value={formData.stock}
                 onChange={handleChange}
@@ -156,9 +175,10 @@ return (
             </div>
 
             <div>
-            <label className="block text-sm font-medium mb-1">SKU</label>
+            <label htmlFor="sku" className="block text-sm font-medium mb-1">SKU</label>
             <input
                 type="text"
+                id="sku"
                 name="sku"
                 value={formData.sku}
                 onChange={handleChange}
@@ -168,7 +188,7 @@ return (
         </div>
 
         <div>
-            <label className="block text-sm font-medium mb-1">Image</label>
+            <label htmlFor="image" className="block text-sm font-medium mb-1">Image</label>
             <div className="border-2 border-dashed rounded-lg p-4">
             {item?.image?.url && !imageFile && (
                 <img
@@ -179,8 +199,9 @@ return (
             )}
             <input
                 type="file"
+                id="image"
                 accept="image/*"
-                onChange={(e) => setImageFile(e.target.files[0])}
+                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
                 className="w-full"
             />
             </div>
@@ -189,12 +210,13 @@ return (
         <div className="flex items-center gap-2">
             <input
             type="checkbox"
+            id="isAvailable"
             name="isAvailable"
             checked={formData.isAvailable}
             onChange={handleChange}
             className="w-4 h-4"
             />
-            <label className="text-sm font-medium">Available for sale</label>
+            <label htmlFor="isAvailable" className="text-sm font-medium">Available for sale</label>
         </div>
 
         <div className="flex gap-3 pt-4">

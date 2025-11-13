@@ -66,7 +66,9 @@ completedAt: Date,
 });
 
 OrderSchema.index({ userId: 1, createdAt: -1 });
-OrderSchema.index({ orderNumber: 1 });
+// `orderNumber` already has `unique: true` on the path which creates an index.
+// Avoid creating a duplicate index to prevent Mongoose warnings.
+// OrderSchema.index({ orderNumber: 1 });
 OrderSchema.index({ userId: 1, paymentStatus: 1 });
 
 export default mongoose.models.Order || mongoose.model('Order', OrderSchema);

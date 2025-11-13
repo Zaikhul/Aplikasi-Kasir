@@ -1,8 +1,6 @@
-'use client';
-
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 
 export default function LoginForm() {
@@ -20,19 +18,28 @@ const handleSubmit = async (e) => {
     setError('');
     setLoading(true);
 
-try {
-const result = await signIn('credentials', {
-    redirect: false,
-    email: formData.email,
-    password: formData.password,
-});
+    try {
+        const emailRegex = /^(?:[a-zA-Z0-9_'^&/+-])+(?:\.(?:[a-zA-Z0-9_'^&/+-])+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(formData.email.trim())) {
+            setError('Please enter a valid email address');
+            setLoading(false);
+            return;
+        }
 
-    if (result.error) {
-        setError('Invalid email or password');
-    } else {
-        router.push('/dashboard');
-        router.refresh();
-    }
+        const result = await signIn('credentials', {
+            redirect: false,
+            email: formData.email.trim().toLowerCase(),
+            password: formData.password,
+        });
+
+        console.log('signIn result', result);
+
+        if (result?.error) {
+            setError('Invalid email or password');
+        } else if (result?.ok) {
+            // Authentication successful, redirect to dashboard
+            router.push('/dashboard');
+        }
     } catch (error) {
         console.error('Login error:', error);
         setError('An error occurred. Please try again.');
@@ -49,7 +56,7 @@ const handleChange = (e) => {
 };
 
 return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 p-4">
     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
         <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
@@ -67,13 +74,14 @@ return (
 
         <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
             Email Address
             </label>
             <div className="relative">
             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
                 type="email"
+                id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
@@ -85,13 +93,14 @@ return (
         </div>
 
         <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
             Password
             </label>
             <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
                 type={showPassword ? 'text' : 'password'}
+                id="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}

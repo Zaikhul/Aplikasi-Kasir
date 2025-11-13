@@ -1,8 +1,6 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { TrendingUp, ShoppingCart, DollarSign, Users, Package, ArrowUp, ArrowDown } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function DashboardOverview() {
 const [stats, setStats] = useState({
@@ -50,7 +48,10 @@ const fetchDashboardData = async () => {
 if (loading) {
     return (
     <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+    <div className="text-center">
+    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+    <p className="text-gray-600">Loading dashboard data...</p>
+    </div>
     </div>
     );
 }
@@ -98,6 +99,13 @@ const statCards = [
     },
 ];
 
+const renderStatValue = (stat) => {
+    if (typeof stat.value === 'string') {
+        return stat.value;
+    }
+    return stat.value?.toString() || '0';
+};
+
 const colorClasses = {
     blue: 'from-blue-500 to-blue-600',
     green: 'from-green-500 to-green-600',
@@ -115,12 +123,12 @@ return (
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((stat, index) => {
+        {statCards.map((stat) => {
             const Icon = stat.icon;
             return (
             <div
-                key={index}
-                className={`bg-gradient-to-br ${colorClasses[stat.color]} rounded-lg shadow-lg p-6 text-white relative overflow-hidden`}
+                key={`stat-${stat.title}`}
+                className={`bg-linear-to-br ${colorClasses[stat.color]} rounded-lg shadow-lg p-6 text-white relative overflow-hidden`}
             >
                 <div className="absolute top-0 right-0 opacity-10">
                 <Icon size={120} />
@@ -138,7 +146,7 @@ return (
                     </div>
                 </div>
                 <p className="text-sm opacity-90 mb-1">{stat.title}</p>
-                <p className="text-3xl font-bold">{stat.value}</p>
+                <p className="text-2xl md:text-3xl font-bold truncate">{renderStatValue(stat)}</p>
                 </div>
             </div>
             );
@@ -177,11 +185,12 @@ return (
         {/* Top Products */}
         <div className="bg-white rounded-lg shadow-lg p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-4">Top Selling Products</h3>
+                {stats.topProducts && stats.topProducts.length > 0 ? (
             <div className="space-y-3">
-            {stats.topProducts.map((product, index) => (
-                <div key={index} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+            {stats.topProducts.map((product, idx) => (
+                <div key={`product-${product.name}-${idx}`} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600 font-bold">
-                    {index + 1}
+                    {idx + 1}
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-800 truncate">{product.name}</p>
@@ -199,6 +208,9 @@ return (
                 </div>
             ))}
             </div>
+                        ) : (
+                        <p className="text-gray-500 text-center py-8">No top products data available</p>
+                        )}
         </div>
         </div>
 
@@ -208,28 +220,28 @@ return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <a
             href="/pos"
-            className="flex flex-col items-center gap-3 p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg hover:shadow-md transition-all"
+            className="flex flex-col items-center gap-3 p-6 bg-linear-to-br from-blue-50 to-blue-100 rounded-lg hover:shadow-md transition-all"
             >
             <ShoppingCart size={32} className="text-blue-600" />
             <span className="font-semibold text-gray-800">New Order</span>
             </a>
             <a
             href="/menu"
-            className="flex flex-col items-center gap-3 p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-lg hover:shadow-md transition-all"
+            className="flex flex-col items-center gap-3 p-6 bg-linear-to-br from-green-50 to-green-100 rounded-lg hover:shadow-md transition-all"
             >
             <Package size={32} className="text-green-600" />
             <span className="font-semibold text-gray-800">Manage Menu</span>
             </a>
             <a
             href="/reports"
-            className="flex flex-col items-center gap-3 p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg hover:shadow-md transition-all"
+            className="flex flex-col items-center gap-3 p-6 bg-linear-to-br from-purple-50 to-purple-100 rounded-lg hover:shadow-md transition-all"
             >
             <TrendingUp size={32} className="text-purple-600" />
             <span className="font-semibold text-gray-800">View Reports</span>
             </a>
             <a
             href="/settings"
-            className="flex flex-col items-center gap-3 p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg hover:shadow-md transition-all"
+            className="flex flex-col items-center gap-3 p-6 bg-linear-to-br from-orange-50 to-orange-100 rounded-lg hover:shadow-md transition-all"
             >
             <Users size={32} className="text-orange-600" />
             <span className="font-semibold text-gray-800">Settings</span>
