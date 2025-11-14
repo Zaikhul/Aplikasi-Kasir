@@ -1,9 +1,7 @@
-'use client';
-
 import Link from 'next/link';
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 
 export default function LoginForm() {
@@ -32,7 +30,6 @@ const result = await signIn('credentials', {
         setError('Invalid email or password');
     } else {
         router.push('/dashboard');
-        router.refresh();
     }
     } catch (error) {
         console.error('Login error:', error);

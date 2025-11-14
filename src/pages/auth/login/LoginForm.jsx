@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 
 export default function LoginForm() {
@@ -140,9 +141,9 @@ return (
         <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
             {/* Don't have an account?{' '} */}
-            <a href="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
+            <Link href="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
             Sign up here
-            </a>
+            </Link>
         </p>
         </div>
     </div>

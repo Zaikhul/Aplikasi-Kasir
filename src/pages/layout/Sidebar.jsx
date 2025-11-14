@@ -1,6 +1,4 @@
-'use client';
-
-import { usePathname } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { signOut } from 'next-auth/react';
 import { 
     LayoutDashboard, 
@@ -15,7 +13,8 @@ import {
 import { useState } from 'react';
 
 export default function Sidebar() {
-const pathname = usePathname();
+const router = useRouter();
+const { pathname } = router;
 const [isMobileOpen, setIsMobileOpen] = useState(false);
 
 const menuItems = [
