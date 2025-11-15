@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Minus, Trash2, CreditCard } from 'lucide-react';
+import { apiClient } from '@/lib/apiClient';
 
 export default function POSInterface() {
     const [menuItems, setMenuItems] = useState([]);
@@ -20,7 +21,7 @@ try {
     if (selectedCategory !== 'all') params.set('category', selectedCategory);
     if (searchTerm) params.set('search', searchTerm);
 
-    const response = await fetch(`/api/menu?${params}`);
+    const response = await apiClient(`/menu?${params}`);
     const data = await response.json();
     setMenuItems(data);
 } catch (error) {
@@ -67,7 +68,7 @@ const handleCheckout = async (paymentMethod) => {
     const { subtotal, tax, total } = calculateTotal();
     
     try {
-    const response = await fetch('/api/orders', {
+    const response = await apiClient('/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

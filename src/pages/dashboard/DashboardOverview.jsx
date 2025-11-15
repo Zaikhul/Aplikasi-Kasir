@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp, ShoppingCart, DollarSign, Users, Package, ArrowUp, ArrowDown } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { apiClient } from '@/lib/apiClient';
 
 export default function DashboardOverview() {
 const [stats, setStats] = useState({
@@ -24,8 +25,8 @@ const fetchDashboardData = async () => {
         const month = new Date().toISOString().slice(0, 7);
 
         const [dailyReport, monthlyReport] = await Promise.all([
-            fetch(`/api/reports/daily?date=${today}`).then(r => r.json()),
-            fetch(`/api/reports/monthly?month=${month}`).then(r => r.json()),
+            apiClient(`/reports/daily?date=${today}`).then(r => r.json()),
+            apiClient(`/reports/monthly?month=${month}`).then(r => r.json()),
         ]);
 
     setStats({

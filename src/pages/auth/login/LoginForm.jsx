@@ -3,6 +3,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
+import { apiClient, setToken } from '@/lib/apiClient';
 
 export default function LoginForm() {
 const router = useRouter();
@@ -20,30 +21,24 @@ const handleSubmit = async (e) => {
     setLoading(true);
 
     try {
-        const emailRegex = /^(?:[a-zA-Z0-9_'^&/+-])+(?:\.(?:[a-zA-Z0-9_'^&/+-])+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
-        if (!emailRegex.test(formData.email.trim())) {
-            setError('Please enter a valid email address');
-            setLoading(false);
-            return;
-        }
-
-        const result = await signIn('credentials', {
-            redirect: false,
+      const response = await apiClient('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
             email: formData.email.trim().toLowerCase(),
             password: formData.password,
-        });
+        }),
+      });
 
-        console.log('signIn result', result);
+      if (response && response.access_token) {
+        setToken(response.access_token);
+        router.push('/dashboard');
+      } else {
+        setError('Invalid email or password');
+      }
 
-        if (result?.error) {
-            setError('Invalid email or password');
-        } else if (result?.ok) {
-            // Authentication successful, redirect to dashboard
-            router.push('/dashboard');
-        }
     } catch (error) {
         console.error('Login error:', error);
-        setError('An error occurred. Please try again.');
+        setError(error.message || 'Invalid email or password');
     } finally {
         setLoading(false);
     }
@@ -141,7 +136,7 @@ return (
         <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
             {/* Don't have an account?{' '} */}
-            <Link href="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
+            <Link href="/auth/register" className="text-blue-600 hover:text-blue-700 font-semibold">
             Sign up here
             </Link>
         </p>

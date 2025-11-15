@@ -1,40 +1,35 @@
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-export default function ProtectedRoute({ children, requiredRole }) {
-const { data: session, status } = useSession();
-const router = useRouter();
+export default function ProtectedRoute({ children }) {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-useEffect(() => {
-    if (status === 'loading') return;
-
-    if (!session) {
-        router.push('/login');
-        return;
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      router.push('/login');
+    } else {
+      // Idealnya: Anda juga harus memvalidasi token ini ke backend
+      // Untuk saat ini, kita anggap token ada = terautentikasi
+      setIsAuthenticated(true);
     }
+    setIsLoading(false);
+  }, [router]);
 
-    if (requiredRole && session.user.role !== requiredRole) {
-        router.push('/dashboard');
-    }
-}, [session, status, router, requiredRole]);
-
-if (status === 'loading') {
+  if (isLoading) {
     return (
-    <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
-    </div>
+      </div>
     );
-}
+  }
 
-if (!session) {
+  if (!isAuthenticated) {
     return null;
-}
+  }
 
-if (requiredRole && session.user.role !== requiredRole) {
-    return null;
-}
-
-return children;
-
+  return children;
 }

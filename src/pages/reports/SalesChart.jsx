@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Download, Calendar } from 'lucide-react';
+import { apiClient } from '@/lib/apiClient';
 
 export default function SalesChart() {
 const [reportType, setReportType] = useState('daily');
@@ -23,7 +24,7 @@ const fetchReport = async () => {
         ? `date=${selectedDate}` 
         : `month=${selectedMonth}`;
 
-    const response = await fetch(`/api/reports/${endpoint}?${dateParam}`);
+    const response = await apiClient(`/reports/${endpoint}?${dateParam}`);
     if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
     }

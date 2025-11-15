@@ -11,6 +11,7 @@ import {
     X
 } from 'lucide-react';
 import { useState } from 'react';
+import { clearToken } from '@/lib/apiClient';
 
 export default function Sidebar() {
 const router = useRouter();
@@ -26,7 +27,8 @@ const menuItems = [
 ];
 
 const handleLogout = async () => {
-    await signOut({ redirect: true, callbackUrl: '/login' });
+    clearToken();
+    router.push('/login');
 };
 
 return (

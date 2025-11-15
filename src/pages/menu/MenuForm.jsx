@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import { apiClient } from '@/lib/apiClient';
 
 function MenuForm({ item, onClose }) {
 const [formData, setFormData] = useState({
@@ -28,7 +29,7 @@ try {
         const formDataImage = new FormData();
         formDataImage.append('file', imageFile);
 
-        const uploadResponse = await fetch('/api/upload', {
+        const uploadResponse = await apiClient('/upload', {
         method: 'POST',
         body: formDataImage,
         });
@@ -43,10 +44,10 @@ try {
         }
     }
 
-    const url = item ? `/api/menu/${item._id}` : '/api/menu';
+    const url = item ? `/menu/${item._id}` : '/menu';
     const method = item ? 'PUT' : 'POST';
 
-    const response = await fetch(url, {
+    const response = await apiClient(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

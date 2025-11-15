@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { Mail, Lock, User, Building, Eye, EyeOff, UserPlus } from 'lucide-react';
+import { apiClient } from '@/lib/apiClient';
 
 export default function RegisterForm() {
 const router = useRouter();
@@ -32,30 +33,26 @@ const handleSubmit = async (e) => {
     setLoading(true);
 
 try {
-    const response = await fetch('/api/auth/register', {
+    const response = await apiClient('/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
         name: formData.name,
-        email: formData.email,
+        email: formData.email.trim().toLowerCase(),
         password: formData.password,
         businessName: formData.businessName,
         }),
     });
 
-    const data = await response.json();
-
-    if (response.ok) {
-        router.push('/login?registered=true');
-    } else if (data?.errors && typeof data.errors === 'object') {
-        // Prefer field errors if present
-        setError(Object.values(data.errors).join('. '));
+    if (response && response.email) {
+        router.push('/auth/login?registered=true');
+    } else if (response?.errors && typeof response.errors === 'object') {
+        setError(Object.values(response.errors).join('. '));
     } else {
-        setError(data.error || 'Registration failed');
+        setError(response.error || 'Registration failed');
     }
 } catch (error) {
     console.error('Registration error:', error);
-    setError('An error occurred. Please try again.');
+    setError(error.message || 'Registration failed');
 } finally {
     setLoading(false);
 }};
@@ -208,7 +205,7 @@ return (
         <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
             Already have an account?{' '}
-            <a href="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
+            <a href="/auth/login" className="text-blue-600 hover:text-blue-700 font-semibold">
             Sign in here
             </a>
         </p>

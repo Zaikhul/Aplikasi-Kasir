@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Edit2, Trash2, Plus } from 'lucide-react';
 import MenuForm from '@/pages/menu/MenuForm';
+import { apiClient } from '@/lib/apiClient';
 
 export default function MenuList() {
     const [menuItems, setMenuItems] = useState([]);
@@ -14,7 +15,7 @@ useEffect(() => {
 
 const fetchMenuItems = async () => {
 try {
-    const response = await fetch('/api/menu');
+    const response = await apiClient('/menu');
     const data = await response.json();
     setMenuItems(data);
     } catch (error) {
@@ -28,7 +29,7 @@ const handleDelete = async (id) => {
 if (!confirm('Are you sure you want to delete this item?')) return;
 
 try {
-    const response = await fetch(`/api/menu/${id}`, {
+    const response = await apiClient(`/menu/${id}`, {
         method: 'DELETE',
     });
 
