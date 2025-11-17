@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
-import { apiClient, setToken } from '@/lib/apiClient';
+import { authApi } from '@/lib/api/auth.api';
 
 export default function LoginForm() {
 const router = useRouter();
@@ -21,21 +20,8 @@ const handleSubmit = async (e) => {
     setLoading(true);
 
     try {
-      const response = await apiClient('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({
-            email: formData.email.trim().toLowerCase(),
-            password: formData.password,
-        }),
-      });
-
-      if (response && response.access_token) {
-        setToken(response.access_token);
-        router.push('/dashboard');
-      } else {
-        setError('Invalid email or password');
-      }
-
+      await authApi.login(formData.email, formData.password);
+      router.push('/dashboard');
     } catch (error) {
         console.error('Login error:', error);
         setError(error.message || 'Invalid email or password');

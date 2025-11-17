@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Edit2, Trash2, Plus } from 'lucide-react';
 import MenuForm from '@/pages/menu/MenuForm';
-import { apiClient } from '@/lib/apiClient';
+import { menuApi } from '@/lib/api/menu.api';
 
 export default function MenuList() {
     const [menuItems, setMenuItems] = useState([]);
@@ -15,8 +15,7 @@ useEffect(() => {
 
 const fetchMenuItems = async () => {
 try {
-    const response = await apiClient('/menu');
-    const data = await response.json();
+    const data = await menuApi.getAll();
     setMenuItems(data);
     } catch (error) {
         console.error('Failed to fetch menu:', error);
@@ -29,15 +28,11 @@ const handleDelete = async (id) => {
 if (!confirm('Are you sure you want to delete this item?')) return;
 
 try {
-    const response = await apiClient(`/menu/${id}`, {
-        method: 'DELETE',
-    });
-
-    if (response.ok) {
-        setMenuItems(menuItems.filter(item => item._id !== id));
-    }
+    await menuApi.delete(id);
+    setMenuItems(menuItems.filter(item => item._id !== id));
     } catch (error) {
         console.error('Failed to delete:', error);
+        alert('Failed to delete menu item: ' + (error.message || 'Unknown error'));
     }
 };
 

@@ -1,5 +1,10 @@
 import SalesChart from '@/pages/reports/SalesChart';
+import ProtectedRoute from '@/pages/auth/ProtectedRoute';
 
 export default function Reports() {
-  return <SalesChart />;
+  return (
+    <ProtectedRoute>
+      <SalesChart />
+    </ProtectedRoute>
+  );
 }

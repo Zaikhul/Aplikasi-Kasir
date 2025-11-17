@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Minus, Trash2, CreditCard } from 'lucide-react';
+import ProtectedRoute from '@/pages/auth/ProtectedRoute';
 
 export default function POSInterface() {
     const [menuItems, setMenuItems] = useState([]);
@@ -98,6 +99,7 @@ const handleCheckout = async (paymentMethod) => {
 const { subtotal, tax, total } = calculateTotal();
 
     return (
+    <ProtectedRoute>
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-screen p-6">
       {/* Menu Section */}
         <div className="lg:col-span-2 overflow-y-auto">
@@ -144,5 +146,6 @@ const { subtotal, tax, total } = calculateTotal();
             </div>
         </div>
         </div>
+    </ProtectedRoute>
     );
 }

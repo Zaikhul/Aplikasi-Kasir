@@ -1,9 +1,10 @@
 /* eslint-disable react/prop-types */
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { apiClient } from '@/lib/apiClient';
+import { menuApi } from '@/lib/api/menu.api';
+import { uploadApi } from '@/lib/api/upload.api';
 
-function MenuForm({ item, onClose }) {
+export default function MenuForm({ item, onClose }) {
 const [formData, setFormData] = useState({
     name: item?.name || '',
     description: item?.description || '',
@@ -26,47 +27,30 @@ try {
 
     // Upload image if new file selected
     if (imageFile) {
-        const formDataImage = new FormData();
-        formDataImage.append('file', imageFile);
-
-        const uploadResponse = await apiClient('/upload', {
-        method: 'POST',
-        body: formDataImage,
-        });
-
-        if (uploadResponse.ok) {
-        imageData = await uploadResponse.json();
-        } else {
-        const uploadError = await uploadResponse.json();
-        setError(uploadError.error || 'Failed to upload image');
-        setLoading(false);
-        return;
-        }
+        const uploadResult = await uploadApi.uploadFile(imageFile);
+        imageData = {
+            url: uploadResult.url,
+            publicId: uploadResult.publicId,
+        };
     }
 
-    const url = item ? `/menu/${item._id}` : '/menu';
-    const method = item ? 'PUT' : 'POST';
-
-    const response = await apiClient(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+    const menuData = {
         ...formData,
         price: Number.parseFloat(formData.price),
         stock: Number.parseInt(formData.stock, 10),
         image: imageData,
-        }),
-    });
+    };
 
-    if (response.ok) {
-        onClose();
+    if (item) {
+        await menuApi.update(item._id, menuData);
     } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to save menu item');
+        await menuApi.create(menuData);
     }
+
+    onClose();
     } catch (err) {
         console.error('Failed to save menu item:', err);
-        setError('An error occurred. Please try again.');
+        setError(err.message || 'An error occurred. Please try again.');
     } finally {
         setLoading(false);
     }

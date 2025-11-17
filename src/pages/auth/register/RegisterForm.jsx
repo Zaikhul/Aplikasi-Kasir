@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { Mail, Lock, User, Building, Eye, EyeOff, UserPlus } from 'lucide-react';
-import { apiClient } from '@/lib/apiClient';
+import { authApi } from '@/lib/api/auth.api';
 
 export default function RegisterForm() {
 const router = useRouter();
@@ -33,22 +33,17 @@ const handleSubmit = async (e) => {
     setLoading(true);
 
 try {
-    const response = await apiClient('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({
+    const response = await authApi.register({
         name: formData.name,
-        email: formData.email.trim().toLowerCase(),
+        email: formData.email,
         password: formData.password,
         businessName: formData.businessName,
-        }),
     });
 
     if (response && response.email) {
         router.push('/auth/login?registered=true');
-    } else if (response?.errors && typeof response.errors === 'object') {
-        setError(Object.values(response.errors).join('. '));
     } else {
-        setError(response.error || 'Registration failed');
+        setError('Registration failed');
     }
 } catch (error) {
     console.error('Registration error:', error);

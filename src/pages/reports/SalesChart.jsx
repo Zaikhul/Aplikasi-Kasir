@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Download, Calendar } from 'lucide-react';
-import { apiClient } from '@/lib/apiClient';
+import { ordersApi } from '@/lib/api/orders.api';
+import { analyticsApi } from '@/lib/api/analytics.api';
 
 export default function SalesChart() {
 const [reportType, setReportType] = useState('daily');
@@ -19,20 +20,39 @@ const fetchReport = async () => {
     setLoading(true);
     setError(null);
     try {
-    const endpoint = reportType === 'daily' ? 'daily' : 'monthly';
-    const dateParam = reportType === 'daily' 
-        ? `date=${selectedDate}` 
-        : `month=${selectedMonth}`;
-
-    const response = await apiClient(`/reports/${endpoint}?${dateParam}`);
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    // Calculate date range based on report type
+    let startDate, endDate;
+    
+    if (reportType === 'daily') {
+        startDate = selectedDate;
+        endDate = selectedDate;
+    } else {
+        // Monthly report - get first and last day of month
+        const year = selectedMonth.split('-')[0];
+        const month = selectedMonth.split('-')[1];
+        startDate = `${year}-${month}-01`;
+        const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+        endDate = `${year}-${month}-${lastDay}`;
     }
-    const data = await response.json();
-    setReportData(data);
+
+    // Fetch order stats for the date range
+    const statsData = await ordersApi.getStats({ startDate, endDate });
+    
+    // Transform data to match expected format
+    const reportData = {
+        totalOrders: statsData.totalOrders || 0,
+        totalRevenue: statsData.totalSales || 0,
+        totalTax: 0, // Calculate from orders if needed
+        averageOrderValue: statsData.averageOrderValue || 0,
+        paymentMethods: statsData.byPaymentMethod || {},
+        dailyRevenue: statsData.dailySales || [],
+        topProducts: {}, // Will be populated from analytics if needed
+    };
+    
+    setReportData(reportData);
     } catch (err) {
         console.error('Failed to fetch report:', err);
-        setError('Failed to load report data. Please try again.');
+        setError(err.message || 'Failed to load report data. Please try again.');
         setReportData(null);
     } finally {
         setLoading(false);

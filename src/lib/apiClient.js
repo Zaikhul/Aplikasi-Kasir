@@ -1,7 +1,7 @@
 /**
      * Mengambil token JWT dari localStorage.
      */
-    function getToken() {
+    export function getToken() {
       if (typeof window === 'undefined') {
         return null;
       }
@@ -13,29 +13,72 @@
      * dan header Authorization (token JWT).
      */
     export async function apiClient(endpoint, options = {}) {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      
+      if (!apiUrl) {
+        throw new Error('NEXT_PUBLIC_API_URL is not configured. Please set it in .env.local file.');
+      }
+      
       const token = getToken();
 
       const headers = {
-        'Content-Type': 'application/json',
         ...options.headers,
       };
+
+      // Only set Content-Type for non-FormData requests
+      if (!(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+      }
 
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
       try {
-        const response = await fetch(`${apiUrl}${endpoint}`, {
+        // Ensure endpoint starts with /
+        const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+        const fullUrl = `${apiUrl}${normalizedEndpoint}`;
+        
+        const response = await fetch(fullUrl, {
           ...options,
           headers,
         });
 
         if (!response.ok) {
-          // Coba parse error dari backend
-          const errorData = await response.json().catch(() => ({}));
-          console.error('API Error:', response.status, errorData);
-          throw new Error(errorData.message || 'API request failed');
+          // Handle 401 Unauthorized - token expired or invalid
+          if (response.status === 401) {
+            // Clear invalid token
+            if (typeof window !== 'undefined') {
+              clearToken();
+              // Redirect to login page
+              window.location.href = '/auth/login';
+            }
+            throw new Error('Session expired. Please login again.');
+          }
+
+          // Check if response is JSON or HTML (404 page)
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('API Error:', response.status, errorData);
+            
+            // Handle validation errors from NestJS
+            if (errorData.message && Array.isArray(errorData.message)) {
+              // NestJS validation errors format
+              const validationMessages = errorData.message.map((err) => {
+                if (typeof err === 'string') return err
+                return err.constraints ? Object.values(err.constraints).join(', ') : JSON.stringify(err)
+              }).join('; ')
+              throw new Error(`Validation failed: ${validationMessages}`)
+            }
+            
+            throw new Error(errorData.message || `API request failed with status ${response.status}`);
+          } else {
+            // HTML response (likely 404 or error page)
+            const text = await response.text().catch(() => '');
+            console.error('API Error: Received HTML instead of JSON', response.status, text.substring(0, 200));
+            throw new Error(`API endpoint not found. Make sure the backend is running on ${apiUrl}`);
+          }
         }
 
         // Jika respons tidak memiliki konten (misalnya 204 No Content)

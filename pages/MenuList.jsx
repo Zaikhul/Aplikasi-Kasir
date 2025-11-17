@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Edit2, Trash2, Plus } from 'lucide-react';
-import MenuForm from './menu';
+import MenuForm from '@/pages/menu/MenuForm';
+import ProtectedRoute from '@/pages/auth/ProtectedRoute';
 
 export default function MenuList() {
     const [menuItems, setMenuItems] = useState([]);
@@ -52,6 +53,7 @@ const handleFormClose = () => {
 };
 
 return (
+    <ProtectedRoute>
     <div className="p-6">
     <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Menu Management</h1>
@@ -129,5 +131,6 @@ return (
         />
     )}
     </div>
+    </ProtectedRoute>
 );
 }

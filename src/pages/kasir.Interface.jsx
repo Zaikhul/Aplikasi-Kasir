@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Minus, Trash2, CreditCard } from 'lucide-react';
-import { apiClient } from '@/lib/apiClient';
+import { productsApi } from '@/lib/api/products.api';
+import { ordersApi } from '@/lib/api/orders.api';
 
 export default function POSInterface() {
     const [menuItems, setMenuItems] = useState([]);
@@ -17,25 +18,24 @@ useEffect(() => {
 
 const fetchMenuItems = async () => {
 try {
-    const params = new URLSearchParams();
-    if (selectedCategory !== 'all') params.set('category', selectedCategory);
-    if (searchTerm) params.set('search', searchTerm);
-
-    const response = await apiClient(`/menu?${params}`);
-    const data = await response.json();
+    const data = await productsApi.getAll({
+        category: selectedCategory,
+        search: searchTerm,
+    });
     setMenuItems(data);
 } catch (error) {
-    console.error('Failed to fetch menu:', error);
+    console.error('Failed to fetch products:', error);
 } finally {
     setLoading(false);
 }};
 
 const addToCart = (item) => {
-    const existingItem = cart.find(i => i._id === item._id);
+    const itemId = item._id || item.id;
+    const existingItem = cart.find(i => (i._id || i.id) === itemId);
     
     if (existingItem) {
     setCart(cart.map(i => 
-        i._id === item._id 
+        (i._id || i.id) === itemId
         ? { ...i, quantity: i.quantity + 1 }
         : i
     ));
@@ -45,7 +45,8 @@ const addToCart = (item) => {
 
 const updateQuantity = (id, delta) => {
     setCart(cart.map(item => {
-    if (item._id === id) {
+    const itemId = item._id || item.id;
+    if (itemId === id) {
         const newQuantity = item.quantity + delta;
         return newQuantity > 0 ? { ...item, quantity: newQuantity } : item;
     }
@@ -54,7 +55,7 @@ const updateQuantity = (id, delta) => {
 };
 
 const removeFromCart = (id) => {
-    setCart(cart.filter(item => item._id !== id));
+    setCart(cart.filter(item => (item._id || item.id) !== id));
 };
 
 const calculateTotal = () => {
@@ -68,31 +69,26 @@ const handleCheckout = async (paymentMethod) => {
     const { subtotal, tax, total } = calculateTotal();
     
     try {
-    const response = await apiClient('/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            items: cart.map(item => ({
-                menuId: item._id,
-                name: item.name,
-                price: item.price,
-                quantity: item.quantity,
-                subtotal: item.price * item.quantity,
-            })),
-            subtotal,
-            tax,
-            total,
-            paymentMethod,
-            paymentStatus: 'completed',
-        }),
-    });
+    const orderData = {
+        items: cart.map(item => ({
+            productId: item._id || item.id,
+            productName: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            imageUrl: item.imageUrl || item.image?.url,
+        })),
+        subtotal,
+        tax,
+        total,
+        paymentMethod,
+    };
 
-    if (response.ok) {
-        setCart([]);
-        alert('Order completed successfully!');
-    }
+    await ordersApi.create(orderData);
+    setCart([]);
+    alert('Order completed successfully!');
     } catch (error) {
         console.error('Checkout failed:', error);
+        alert('Failed to complete order: ' + (error.message || 'Unknown error'));
     }
 };
 

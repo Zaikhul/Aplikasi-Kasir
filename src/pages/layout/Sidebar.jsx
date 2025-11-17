@@ -1,5 +1,4 @@
 import { useRouter } from 'next/router';
-import { signOut } from 'next-auth/react';
 import { 
     LayoutDashboard, 
     ShoppingCart, 
