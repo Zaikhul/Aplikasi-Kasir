@@ -45,7 +45,7 @@ export default function ReportAnalyticsPage() {
 
   const handleExport = () => {
     if (typeof window !== 'undefined') {
-      alert('Export functionality would be implemented here')
+      window.location.href = '/reports/export'
     }
   }
 

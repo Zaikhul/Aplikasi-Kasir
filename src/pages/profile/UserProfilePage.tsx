@@ -17,6 +17,7 @@ import { ShieldCheck, LogOut, Save, UserRound } from 'lucide-react'
 import { authApi } from '@/lib/api/auth.api'
 import { resetAuthCache, useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/router'
+import PrinterSettings from '@/components/settings/PrinterSettings'
 
 type FormState = {
   name: string
@@ -301,6 +302,19 @@ export default function UserProfilePage() {
             </Card>
           </div>
         </div>
+
+        {/* Printer Settings Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Printer Configuration</CardTitle>
+            <CardDescription>
+              Connect and manage your Bluetooth or USB printers for receipt printing.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PrinterSettings />
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   )

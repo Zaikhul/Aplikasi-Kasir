@@ -8,7 +8,9 @@ import { formatCurrency } from '@/lib/currency'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import SafeIcon from '@/components/dashboard/common/SafeIcon'
+import { printInvoice, isPrinterConfigured, getActivePrinterName, type InvoiceData } from '@/lib/printer.service'
 
 interface InvoiceOrder {
   _id?: string
@@ -49,6 +51,18 @@ function InvoiceContent() {
   const [order, setOrder] = useState<InvoiceOrder | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [printing, setPrinting] = useState(false)
+  const [printError, setPrintError] = useState<string | null>(null)
+  const [printerName, setPrinterName] = useState<string | null>(null)
+  const [hasPrinter, setHasPrinter] = useState(false)
+
+  // Check printer configuration on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHasPrinter(isPrinterConfigured())
+      setPrinterName(getActivePrinterName())
+    }
+  }, [])
 
   useEffect(() => {
     if (!router.isReady || typeof id !== 'string') {
@@ -79,7 +93,8 @@ function InvoiceContent() {
     }
     return [
       { label: 'Subtotal', value: formatCurrency(order.subtotal) },
-      { label: 'Tax (10%)', value: formatCurrency(order.tax) },
+      // # Tax display deactivated
+      // { label: 'Tax (10%)', value: formatCurrency(order.tax) },
       { label: 'Total', value: formatCurrency(order.total) },
       ...(order.meta?.cashReceived !== undefined
         ? [
@@ -90,9 +105,49 @@ function InvoiceContent() {
     ]
   }, [order])
 
-  const handlePrint = () => {
-    if (typeof window !== 'undefined') {
-      window.print()
+  const handlePrint = async () => {
+    if (!order) {
+      return
+    }
+
+    setPrinting(true)
+    setPrintError(null)
+
+    try {
+      // Prepare invoice data
+      const invoiceData: InvoiceData = {
+        orderNumber: order.orderNumber,
+        orderId: order._id,
+        items: order.items.map((item) => ({
+          productName: item.productName,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        subtotal: order.subtotal,
+        // # Tax deactivated
+        // tax: order.tax,
+        tax: 0, // Tax disabled
+        total: order.total,
+        paymentMethod: order.paymentMethod,
+        createdAt: order.createdAt,
+        cashReceived: order.meta?.cashReceived,
+        changeGiven: order.meta?.changeGiven,
+      }
+
+      // Print using configured printer or fallback to browser print
+      await printInvoice(invoiceData)
+
+      // Show success message if printed via printer
+      if (hasPrinter) {
+        // You could show a toast notification here
+        console.log('Invoice printed successfully via printer:', printerName)
+      }
+    } catch (err: any) {
+      console.error('Print error:', err)
+      setPrintError(err.message || 'Failed to print invoice')
+      // Error is already handled in printInvoice (fallback to browser print)
+    } finally {
+      setPrinting(false)
     }
   }
 
@@ -106,6 +161,23 @@ function InvoiceContent() {
         <h1 className="text-3xl font-bold tracking-tight">Invoice</h1>
         <p className="text-muted-foreground">Print this invoice for your customer records.</p>
       </div>
+
+      {/* Printer status */}
+      {hasPrinter && printerName && (
+        <Alert>
+          <SafeIcon name="Printer" className="h-4 w-4" />
+          <AlertDescription>
+            Invoice will be printed to: <strong>{printerName}</strong>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Print error */}
+      {printError && (
+        <Alert variant="destructive">
+          <AlertDescription>{printError}</AlertDescription>
+        </Alert>
+      )}
 
       {loading ? (
         <Card>
@@ -180,9 +252,14 @@ function InvoiceContent() {
               </div>
 
               <div className="flex flex-col gap-3 print:hidden">
-                <Button type="button" onClick={handlePrint} className="gap-2">
+                <Button 
+                  type="button" 
+                  onClick={handlePrint} 
+                  className="gap-2"
+                  disabled={printing || !order}
+                >
                   <SafeIcon name="Printer" className="mr-2 h-4 w-4" />
-                  Print invoice
+                  {printing ? 'Printing...' : 'Print invoice'}
                 </Button>
                 <Button type="button" variant="outline" onClick={handleBackToDashboard}>
                   <SafeIcon name="ArrowLeft" className="mr-2 h-4 w-4" />

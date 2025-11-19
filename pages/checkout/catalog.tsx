@@ -18,7 +18,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Separator } from '@/components/ui/separator'
 import { Input } from '@/components/ui/input'
 
-const TAX_RATE = 0.1
+// # Tax deactivated
+// const TAX_RATE = 0.1
+const TAX_RATE = 0 // Tax disabled
 type PaymentMethod = 'cash' | 'card' | 'digital'
 
 const paymentOptions: Array<{
@@ -63,8 +65,11 @@ function CheckoutContent() {
   }, [paymentMethod])
 
   const totals = useMemo(() => calculateCatalogTotals(items), [items])
-  const tax = totals.subtotal * TAX_RATE
-  const grandTotal = totals.subtotal + tax
+  // # Tax calculation deactivated
+  // const tax = totals.subtotal * TAX_RATE
+  const tax = 0 // Tax disabled
+  // const grandTotal = totals.subtotal + tax
+  const grandTotal = totals.subtotal // No tax added
   const cashAmount = useMemo(() => {
     const parsed = Number.parseFloat(cashGiven)
     return Number.isFinite(parsed) ? parsed : 0
@@ -92,7 +97,9 @@ function CheckoutContent() {
           imageUrl: item.imageUrl,
         })),
         subtotal: totals.subtotal,
-        tax,
+        // # Tax deactivated - sending 0 instead
+        // tax,
+        tax: 0, // Tax disabled
         total: grandTotal,
         paymentMethod,
         ...(paymentMethod === 'cash'
@@ -249,10 +256,11 @@ function CheckoutContent() {
                    <span className="text-muted-foreground">Subtotal</span>
                    <span className="font-semibold">{formatCurrency(totals.subtotal)}</span>
                  </div>
-                 <div className="flex items-center justify-between">
-                   <span className="text-muted-foreground">Tax (10%)</span>
-                   <span className="font-semibold">{formatCurrency(tax)}</span>
-                 </div>
+                {/* # Tax display deactivated */}
+                {/* <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Tax (10%)</span>
+                  <span className="font-semibold">{formatCurrency(tax)}</span>
+                </div> */}
                  {paymentMethod === 'cash' && (
                    <div className="flex items-center justify-between">
                      <span className="text-muted-foreground">Change</span>

@@ -91,10 +91,10 @@ export default function ProductOrderPanel({
           </div>
           <div className="flex items-center gap-2">
             <Button type="button" size="icon" variant="outline" onClick={handleDecrease}>
-              <SafeIcon name='Minus' className="h-4 w-4" />
+              <SafeIcon name='minus' className="h-4 w-4" />
             </Button>
             <Button type="button" size="icon" variant="outline" onClick={handleIncrease}>
-              <SafeIcon name='Plus' className="h-4 w-4" />
+              <SafeIcon name='plus' className="h-4 w-4" />
             </Button>
           </div>
         </div>

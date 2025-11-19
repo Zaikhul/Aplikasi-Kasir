@@ -16,7 +16,9 @@ type CatalogSummaryProps = Readonly<{
   onCheckout: () => void
 }>
 
-const TAX_RATE = 0.1
+// # Tax deactivated
+// const TAX_RATE = 0.1
+const TAX_RATE = 0 // Tax disabled
 
 export default function CatalogSummary({
   items,
@@ -26,10 +28,13 @@ export default function CatalogSummary({
   onCheckout,
 }: CatalogSummaryProps) {
   const { tax, total } = useMemo(() => {
-    const computedTax = subtotal * TAX_RATE
+    // # Tax calculation deactivated
+    // const computedTax = subtotal * TAX_RATE
+    const computedTax = 0 // Tax disabled
     return {
       tax: computedTax,
-      total: subtotal + computedTax,
+      // total: subtotal + computedTax,
+      total: subtotal, // No tax added
     }
   }, [subtotal])
 
@@ -100,10 +105,11 @@ export default function CatalogSummary({
             <span className="text-muted-foreground">Subtotal</span>
             <span className="font-semibold">{formatCurrency(subtotal)}</span>
           </div>
-          <div className="flex items-center justify-between">
+          {/* # Tax display deactivated */}
+          {/* <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Tax (10%)</span>
             <span className="font-semibold">{formatCurrency(tax)}</span>
-          </div>
+          </div> */}
           <div className="flex items-center justify-between text-base font-semibold">
             <span>Total</span>
             <span>{formatCurrency(total)}</span>
