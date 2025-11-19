@@ -13,6 +13,7 @@ import ProductInfo from '@/components/dashboard/product-details/ProductInfo'
 import ProductDescription from '@/components/dashboard/product-details/ProductDescription'
 import ProductInventory from '@/components/dashboard/product-details/ProductInventory'
 import ProductActions from '@/components/dashboard/product-details/ProductActions'
+import ProductOrderPanel from '@/components/dashboard/product-details/ProductOrderPanel'
 import type { ProductCategory, ProductStatus } from '@/data/products'
 
 interface ProductDetails {
@@ -30,19 +31,45 @@ interface ProductDetails {
   createdAt?: string
 }
 
-function mapProductResponse(data: any): ProductDetails {
+type ProductResponse = {
+  _id?: string
+  id?: string
+  name?: string
+  description?: string
+  price?: number
+  category?: ProductCategory
+  inventory?: number
+  sku?: string
+  imageUrl?: string
+  detailedImages?: Array<string | { url?: string }>
+  status?: ProductStatus
+  rating?: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+function deriveStatusFromInventory(inventory: number): ProductStatus {
+  if (inventory === 0) {
+    return 'Out of Stock'
+  }
+  if (inventory < 10) {
+    return 'Low Stock'
+  }
+  return 'In Stock'
+}
+
+function mapProductResponse(data: ProductResponse): ProductDetails {
   const inventory = data.inventory ?? 0
-  const fallbackStatus: ProductStatus =
-    inventory === 0 ? 'Out of Stock' : inventory < 10 ? 'Low Stock' : 'In Stock'
+  const fallbackStatus: ProductStatus = deriveStatusFromInventory(inventory)
 
   const detailedImages =
-    data.detailedImages?.map((img: any) => {
-      const url = typeof img === 'string' ? img : img?.url
+    data.detailedImages?.map((img) => {
+      const url = typeof img === 'string' ? img : img?.url ?? ''
       return normalizeImageSrc(url)
     }) ?? []
 
   return {
-    id: data._id ?? data.id,
+    id: data._id ?? data.id ?? '',
     name: data.name ?? 'Unnamed Product',
     description: data.description ?? '',
     price: data.price ?? 0,
@@ -139,6 +166,19 @@ function ProductDetailsContent() {
       )
     }
 
+    const handleInventoryChange = (nextInventory: number) => {
+      setProduct((prev) => {
+        if (!prev) {
+          return prev
+        }
+        return {
+          ...prev,
+          inventory: nextInventory,
+          status: deriveStatusFromInventory(nextInventory),
+        }
+      })
+    }
+
     return (
       <>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -166,6 +206,13 @@ function ProductDetailsContent() {
               rating={product.rating}
               category={product.category}
               status={product.status}
+            />
+            <Separator />
+            <ProductOrderPanel
+              productId={product.id}
+              price={product.price}
+              inventory={product.inventory}
+              onInventoryChange={handleInventoryChange}
             />
             <Separator />
             <ProductInventory

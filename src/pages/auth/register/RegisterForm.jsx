@@ -67,7 +67,7 @@ return (
             <UserPlus className="text-white" size={32} />
         </div>
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h1>
-        <p className="text-gray-600">Start your POS journey today</p>
+        <p className="text-gray-600">Start your Kasir Pinter journey today</p>
         </div>
 
         {error && (
@@ -90,7 +90,7 @@ return (
                 value={formData.name}
                 onChange={handleChange}
                 required
-                placeholder="John Doe"
+                placeholder="Your name"
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             </div>

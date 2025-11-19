@@ -20,8 +20,9 @@ import { useAuth } from '@/hooks/useAuth'
 const navigationItems = [
   { name: 'Dashboard', href: '/dashboard-overview', icon: 'LayoutDashboard' },
   { name: 'Products', href: '/product-management', icon: 'Package' },
+  { name: 'Catalog', href: '/catalog', icon: 'ShoppingBag' },
+  { name: 'Checkout', href: '/checkout/catalog', icon: 'CreditCard' },
   { name: 'Analytics', href: '/report-analytics', icon: 'BarChart3' },
-  { name: 'Settings', href: '/dashboard-settings', icon: 'Settings' },
   { name: 'User Profile', href: '/user-profile', icon: 'UserRound' },
 ]
 
@@ -50,8 +51,8 @@ export default function DashboardSidebar() {
             <SafeIcon name="UtensilsCrossed" className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">FoodDash</h1>
-            <p className="text-xs text-muted-foreground">Dashboard</p>
+            <h1 className="text-xl font-bold text-foreground">Kasir Pintar</h1>
+            <p className="text-xs text-muted-foreground"></p>
           </div>
         </div>
       </SidebarHeader>

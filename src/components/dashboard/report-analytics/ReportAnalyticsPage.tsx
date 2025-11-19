@@ -11,9 +11,35 @@ import CategoryChart from '@/components/dashboard/report-analytics/CategoryChart
 import SafeIcon from '@/components/dashboard/common/SafeIcon'
 import { analyticsApi } from '@/lib/api/analytics.api'
 
+interface DashboardStats {
+  totalRevenue: number
+  totalOrders: number
+  totalProducts: number
+  averageOrderValue: number
+  topProducts: Array<{ productId: string; name: string; sales: number; quantity: number }>
+  recentOrders: Array<{
+    _id?: string
+    orderNumber?: string
+    total: number
+    paymentMethod: string
+    createdAt: string
+  }>
+  lowStockProducts: Array<{ name: string; inventory: number; status: string }>
+  salesByCategory: Record<string, number>
+  salesByDay: Array<{ date: string; sales: number; orders: number }>
+  paymentSummary: Record<string, number>
+}
+
+type TopProduct = DashboardStats['topProducts'][number]
+type RecentOrder = DashboardStats['recentOrders'][number]
+type LowStockProduct = DashboardStats['lowStockProducts'][number]
+type SalesDay = DashboardStats['salesByDay'][number]
+
+import { formatCurrency } from '@/lib/currency'
+
 export default function ReportAnalyticsPage() {
   const [dateRange, setDateRange] = useState('month')
-  const [dashboardStats, setDashboardStats] = useState<any>(null)
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null)
   const [categorySales, setCategorySales] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
 
@@ -49,25 +75,46 @@ export default function ReportAnalyticsPage() {
     loadAnalytics()
   }, [])
 
-  // Transform category sales to chart format
+  const categorySource =
+    Object.keys(categorySales).length > 0
+      ? categorySales
+      : dashboardStats?.salesByCategory ?? {}
+
+  const paymentEntries =
+    dashboardStats && dashboardStats.paymentSummary
+      ? (Object.entries(dashboardStats.paymentSummary) as Array<[string, number]>)
+      : []
+  const paymentTotal = paymentEntries.reduce((sum, [, amount]) => sum + amount, 0)
+
   const categoryChartData = {
     title: 'Product Category Distribution',
-    labels: Object.keys(categorySales),
-    series: [{
-      name: 'Sales',
-      data: Object.values(categorySales),
-    }],
+    labels: Object.keys(categorySource),
+    series: [
+      {
+        name: 'Sales',
+        data: Object.values(categorySource),
+      },
+    ],
   }
 
   // Transform sales data for chart
-  const salesChartData = dashboardStats?.salesByDay ? {
-    title: 'Sales Overview',
-    labels: dashboardStats.salesByDay.map((d: any) => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
-    series: [{
-      name: 'Revenue',
-      data: dashboardStats.salesByDay.map((d: any) => d.sales || 0),
-    }],
-  } : null
+  const salesChartData = dashboardStats?.salesByDay
+    ? {
+        title: 'Sales Overview',
+        labels: dashboardStats.salesByDay.map((d: SalesDay) =>
+          new Date(d.date).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          }),
+        ),
+        series: [
+          {
+            name: 'Revenue',
+            data: dashboardStats.salesByDay.map((d: SalesDay) => d.sales || 0),
+          },
+        ],
+      }
+    : null
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -132,27 +179,23 @@ export default function ReportAnalyticsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatsCard
               title="Total Revenue"
-              value={`$${dashboardStats.totalRevenue?.toLocaleString() || 0}`}
+              value={formatCurrency(dashboardStats.totalRevenue)}
               icon="DollarSign"
-              trend={{ value: 0, isPositive: true }}
             />
             <StatsCard
               title="Total Orders"
               value={dashboardStats.totalOrders?.toLocaleString() || '0'}
               icon="ShoppingCart"
-              trend={{ value: 0, isPositive: true }}
             />
             <StatsCard
               title="Total Products"
               value={dashboardStats.totalProducts?.toLocaleString() || '0'}
               icon="Package"
-              trend={{ value: 0, isPositive: true }}
             />
             <StatsCard
               title="Avg Order Value"
-              value={`$${dashboardStats.averageOrderValue?.toFixed(2) || '0.00'}`}
+              value={formatCurrency(dashboardStats.averageOrderValue)}
               icon="TrendingUp"
-              trend={{ value: 0, isPositive: true }}
             />
           </div>
         ) : null}
@@ -216,19 +259,22 @@ export default function ReportAnalyticsPage() {
           <CardContent>
             {loading ? (
               <div className="space-y-4">
-                {[1, 2, 3].map(i => (
+                {[1, 2, 3].map((i) => (
                   <div key={i} className="h-16 bg-muted rounded animate-pulse"></div>
                 ))}
               </div>
             ) : dashboardStats?.topProducts && dashboardStats.topProducts.length > 0 ? (
               <div className="space-y-4">
-                {dashboardStats.topProducts.slice(0, 5).map((product: any, idx: number) => (
-                  <div key={idx} className="flex items-center justify-between pb-4 border-b last:border-0">
+                {dashboardStats.topProducts.slice(0, 5).map((product: TopProduct, idx) => (
+                  <div
+                    key={`${product.productId}-${idx}`}
+                    className="flex items-center justify-between pb-4 border-b last:border-0"
+                  >
                     <div>
                       <p className="font-medium">{product.name}</p>
                       <p className="text-sm text-muted-foreground">{product.quantity} sold</p>
                     </div>
-                    <p className="font-semibold text-primary">${product.sales.toLocaleString()}</p>
+                    <p className="font-semibold text-primary">{formatCurrency(product.sales)}</p>
                   </div>
                 ))}
               </div>
@@ -242,25 +288,124 @@ export default function ReportAnalyticsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Customer Insights</CardTitle>
-            <CardDescription>User engagement metrics</CardDescription>
+            <CardTitle className="text-lg">Payment Breakdown</CardTitle>
+            <CardDescription>Revenue by payment method</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {[
-                { label: 'Total Customers', value: '2,543', change: '+12.5%' },
-                { label: 'New Customers', value: '342', change: '+8.2%' },
-                { label: 'Repeat Customers', value: '1,201', change: '+15.3%' },
-              ].map((metric, idx) => (
-                <div key={idx} className="flex items-center justify-between pb-4 border-b last:border-0">
-                  <p className="text-sm text-muted-foreground">{metric.label}</p>
-                  <div className="text-right">
-                    <p className="font-semibold">{metric.value}</p>
-                    <p className="text-xs text-green-600">{metric.change}</p>
+            {dashboardStats && Object.keys(dashboardStats.paymentSummary || {}).length > 0 ? (
+              <div className="space-y-4">
+                {paymentEntries.map(([method, value]) => {
+                  const percentage = paymentTotal ? Math.round((value / paymentTotal) * 100) : 0
+                  const label =
+                    method === 'cash'
+                      ? 'Cash'
+                      : method === 'card'
+                        ? 'Card'
+                        : 'Digital'
+
+                  return (
+                    <div key={method} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <p className="text-muted-foreground">{label}</p>
+                        <p className="font-medium">{formatCurrency(value)}</p>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted">
+                        <div
+                          className="h-2 rounded-full bg-primary transition-all"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">{percentage}% of revenue</p>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                {loading ? 'Loading payment data...' : 'No payment data available'}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Recent Transactions</CardTitle>
+            <CardDescription>Latest recorded orders</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-14 rounded bg-muted animate-pulse" />
+                ))}
+              </div>
+            ) : dashboardStats?.recentOrders && dashboardStats.recentOrders.length > 0 ? (
+              <div className="space-y-4">
+                {dashboardStats.recentOrders.slice(0, 5).map((order: RecentOrder, idx) => (
+                  <div
+                    key={order.orderNumber ?? idx}
+                    className="flex items-center justify-between pb-3 border-b last:border-0"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        {order.orderNumber || `Order ${order._id?.toString()?.slice(-6)}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(order.createdAt).toLocaleString('id-ID')}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">{formatCurrency(order.total)}</p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {order.paymentMethod}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                No recent transactions available
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Low Stock Alerts</CardTitle>
+            <CardDescription>Products that require restocking</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-14 rounded bg-muted animate-pulse" />
+                ))}
+              </div>
+            ) : dashboardStats?.lowStockProducts && dashboardStats.lowStockProducts.length > 0 ? (
+              <div className="space-y-3">
+                {dashboardStats.lowStockProducts.slice(0, 5).map((product: LowStockProduct, idx) => (
+                  <div
+                    key={`${product.name}-${idx}`}
+                    className="flex items-center justify-between pb-3 border-b last:border-0"
+                  >
+                    <div>
+                      <p className="font-medium">{product.name}</p>
+                      <p className="text-xs text-muted-foreground">{product.status}</p>
+                    </div>
+                    <p className="text-sm font-semibold">{product.inventory} units</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                All products are sufficiently stocked
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

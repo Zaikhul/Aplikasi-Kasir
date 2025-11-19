@@ -47,10 +47,10 @@ for (const hostEntry of extraRemoteHosts.filter(
     }
 }
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:6400'
+const apiUrl = process.env.NEXT_PUBLIC_API_URL
 if (!process.env.NEXT_PUBLIC_API_URL) {
   console.warn(
-    'NEXT_PUBLIC_API_URL is not defined. Falling back to http://localhost:6400 for image rewrites.',
+    'NEXT_PUBLIC_API_URL is not defined. Falling back to Server for image rewrites.',
   )
 }
 

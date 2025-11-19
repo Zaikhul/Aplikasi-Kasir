@@ -16,6 +16,7 @@ import SafeIcon from '@/components/dashboard/common/SafeIcon'
 import EmptyState from '@/components/dashboard/common/EmptyState'
 import type { IProductModel } from '@/data/products'
 import { normalizeImageSrc } from '@/lib/image'
+import { formatCurrency } from '@/lib/currency'
 
 interface ProductManagementTableProps {
   readonly products: IProductModel[]
@@ -97,7 +98,7 @@ export default function ProductManagementTable({
                 <Badge variant="outline">{product.category}</Badge>
               </TableCell>
               <TableCell className="text-right font-semibold">
-                Rp. {product.price.toFixed(2)}
+                {formatCurrency(product.price)}
               </TableCell>
               <TableCell className="text-center">{product.inventory}</TableCell>
               <TableCell>

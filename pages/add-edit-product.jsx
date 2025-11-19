@@ -7,7 +7,7 @@ export default function AddEditProduct() {
   return (
     <ProtectedRoute>
       <Head>
-        <title>Add/Edit Product - FoodDash</title>
+        <title>Edit Product - Kasir Pintar</title>
       </Head>
       <DashboardLayout>
         <div className="container mx-auto py-8 px-4 md:px-6">

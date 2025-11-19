@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import SafeIcon from '@/components/dashboard/common/SafeIcon'
 import { normalizeImageSrc } from '@/lib/image'
+import { formatCurrency } from '@/lib/currency'
 
 interface ProductCardProps {
   readonly id: string
@@ -56,7 +57,7 @@ export default function ProductCard({
           </div>
           <div className="flex items-center justify-between">
             <p className="text-2xl font-bold text-primary">
-              Rp {price.toLocaleString('id-ID')}
+              {formatCurrency(price)}
             </p>
             {stock !== undefined && (
               <p className={`text-sm ${stock > 0 ? 'text-muted-foreground' : 'text-destructive'}`}>

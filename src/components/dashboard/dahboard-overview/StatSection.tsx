@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import StatsCard from '@/components/dashboard/common/StatsCard'
 import { analyticsApi } from '@/lib/api/analytics.api'
+import { formatCurrency } from '@/lib/currency'
 
 export default function StatsSection() {
   const [stats, setStats] = useState({
@@ -50,7 +51,7 @@ export default function StatsSection() {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <StatsCard
         title="Total Revenue"
-        value={`$${stats.totalRevenue.toLocaleString()}`}
+        value={formatCurrency(stats.totalRevenue)}
         icon="DollarSign"
         trend={{ value: 0, isPositive: true }}
       />
@@ -68,7 +69,7 @@ export default function StatsSection() {
       />
       <StatsCard
         title="Avg Order Value"
-        value={`$${stats.averageOrderValue.toFixed(2)}`}
+        value={formatCurrency(stats.averageOrderValue)}
         icon="TrendingUp"
         trend={{ value: 0, isPositive: true }}
       />

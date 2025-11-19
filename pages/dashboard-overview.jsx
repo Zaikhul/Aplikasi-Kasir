@@ -7,7 +7,7 @@ export default function DashboardOverview() {
   return (
     <ProtectedRoute>
       <Head>
-        <title>Dashboard Overview - FoodDash</title>
+        <title>Dashboard - Kasir Pintar</title>
       </Head>
       <DashboardLayout headerPlaceholder="Search products...">
         <DashboardOverviewPage />

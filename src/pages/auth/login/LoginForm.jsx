@@ -45,7 +45,7 @@ return (
             <LogIn className="text-white" size={32} />
         </div>
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h1>
-        <p className="text-gray-600">Sign in to your POS account</p>
+        <p className="text-gray-600">Sign in to your Kasir Pintar account</p>
         </div>
 
         {error && (

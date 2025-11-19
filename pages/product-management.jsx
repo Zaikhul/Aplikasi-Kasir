@@ -7,7 +7,7 @@ export default function ProductManagement() {
   return (
     <ProtectedRoute>
       <Head>
-        <title>Product Management - FoodDash</title>
+        <title>Product Management - Kasir Pintar</title>
       </Head>
       <DashboardLayout headerPlaceholder="Search products...">
         <ProductManagementContent />

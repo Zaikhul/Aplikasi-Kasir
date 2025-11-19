@@ -9,6 +9,7 @@ import SafeIcon from '@/components/dashboard/common/SafeIcon'
 import EmptyState from '@/components/dashboard/common/EmptyState'
 import type { IProductModel } from '@/data/products'
 import { normalizeImageSrc } from '@/lib/image'
+import { formatCurrency } from '@/lib/currency'
 
 interface ProductManagementGridProps {
   readonly products: IProductModel[]
@@ -79,7 +80,7 @@ export default function ProductManagementGrid({
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-lg font-bold text-primary">Rp. {product.price.toFixed(2)}</p>
+                <p className="text-lg font-bold text-primary">{formatCurrency(product.price)}</p>
                 <div className="flex items-center gap-1">
                   <SafeIcon name="Star" className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                   <span className="text-xs font-medium">{product.rating}</span>

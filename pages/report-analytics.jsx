@@ -7,7 +7,7 @@ export default function ReportAnalytics() {
   return (
     <ProtectedRoute>
       <Head>
-        <title>Reporting & Analytics - FoodDash</title>
+        <title>Reporting & Analytics - Kasir Pintar</title>
       </Head>
       <DashboardLayout headerPlaceholder="Search analytics...">
         <ReportAnalyticsPage />

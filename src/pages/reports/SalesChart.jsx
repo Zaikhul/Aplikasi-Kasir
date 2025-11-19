@@ -3,6 +3,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { Download, Calendar } from 'lucide-react';
 import { ordersApi } from '@/lib/api/orders.api';
 import { analyticsApi } from '@/lib/api/analytics.api';
+import { formatCurrency } from '@/lib/currency';
 
 export default function SalesChart() {
 const [reportType, setReportType] = useState('daily');
@@ -162,13 +163,13 @@ return (
         <div className="bg-green-50 p-4 rounded-lg">
             <p className="text-sm text-gray-600">Total Revenue</p>
             <p className="text-2xl font-bold">
-            Rp {(reportData.totalRevenue || 0).toLocaleString('id-ID')}
+            {formatCurrency(reportData.totalRevenue || 0)}
             </p>
         </div>
         <div className="bg-yellow-50 p-4 rounded-lg">
             <p className="text-sm text-gray-600">Total Tax</p>
             <p className="text-2xl font-bold">
-            Rp {(reportData.totalTax || 0).toLocaleString('id-ID')}
+            {formatCurrency(reportData.totalTax || 0)}
             </p>
         </div>
         <div className="bg-purple-50 p-4 rounded-lg">
@@ -195,7 +196,7 @@ return (
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="hour" />
                 <YAxis />
-                <Tooltip formatter={(value) => `Rp ${(value || 0).toLocaleString('id-ID')}`} />
+                <Tooltip formatter={(value) => formatCurrency(value || 0)} />
                 <Bar dataKey="revenue" fill="#3b82f6" />
             </BarChart>
             </ResponsiveContainer>
@@ -210,7 +211,7 @@ return (
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="day" />
                 <YAxis />
-                <Tooltip formatter={(value) => `Rp ${(value || 0).toLocaleString('id-ID')}`} />
+                <Tooltip formatter={(value) => formatCurrency(value || 0)} />
                 <Legend />
                 <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} />
             </LineChart>
@@ -231,7 +232,7 @@ return (
                     <span className="font-medium truncate">{name}</span>
                     <div className="text-right">
                     <p className="font-semibold">
-                        Rp {(data.revenue || 0).toLocaleString('id-ID')}
+                        {formatCurrency(data.revenue || 0)}
                     </p>
                     <p className="text-sm text-gray-600">{data.quantity || 0} sold</p>
                     </div>
@@ -254,7 +255,7 @@ return (
                     <span className="font-semibold">
                     {typeof value === 'number' && value < 1000 
                         ? `${value} orders`
-                        : `Rp ${(value || 0).toLocaleString('id-ID')}`}
+                        : formatCurrency(value || 0)}
                     </span>
                 </div>
                 ))}

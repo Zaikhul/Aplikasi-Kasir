@@ -4,9 +4,16 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { analyticsApi } from '@/lib/api/analytics.api'
 import SafeIcon from '@/components/dashboard/common/SafeIcon'
+import { formatCurrency } from '@/lib/currency'
+
+interface SalesDay {
+  date: string
+  sales: number
+  orders: number
+}
 
 export default function SalesChartSection() {
-  const [salesData, setSalesData] = useState<any[]>([])
+  const [salesData, setSalesData] = useState<SalesDay[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -77,22 +84,25 @@ export default function SalesChartSection() {
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-medium text-foreground">Daily Sales</span>
                   <span className="text-xs text-muted-foreground">
-                    Peak: ${Math.max(...salesData.map(d => d.sales || 0)).toLocaleString()}
+                    Peak: {formatCurrency(Math.max(...salesData.map(d => d.sales || 0)))}
                   </span>
                 </div>
                 <div className="flex items-end gap-2 h-32">
-                  {salesData.slice(-7).map((data, idx) => (
-                    <div key={idx} className="flex-1 flex flex-col items-center gap-2">
-                      <div 
-                        className="w-full bg-gradient-to-t from-primary to-primary/60 rounded-t transition-all hover:opacity-80"
+                  {salesData.slice(-7).map((data, idx) => {
+                    const key = data?.date ?? `day-${idx}`
+                    return (
+                      <div key={key} className="flex-1 flex flex-col items-center gap-2">
+                        <div
+                          className="w-full bg-linear-to-t from-primary to-primary/60 rounded-t transition-all hover:opacity-80"
                         style={{ height: `${((data.sales || 0) / maxValue) * 100}%` }}
-                        title={`${data.date}: $${(data.sales || 0).toLocaleString()}`}
+                        title={`${data.date}: ${formatCurrency(data.sales || 0)}`}
                       />
                       <span className="text-xs text-muted-foreground">
                         {new Date(data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </span>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             </div>
@@ -108,31 +118,31 @@ export default function SalesChartSection() {
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
                 <SafeIcon name="TrendingUp" className="w-4 h-4 text-green-600" />
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">Avg Daily Sales</p>
                 <p className="text-xs text-muted-foreground">
-                  ${avgDailySales.toFixed(2)}
+                  {formatCurrency(avgDailySales)}
                 </p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
                 <SafeIcon name="BarChart3" className="w-4 h-4 text-blue-600" />
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">Total Sales</p>
                 <p className="text-xs text-muted-foreground">
-                  ${totalSales.toLocaleString()}
+                  {formatCurrency(totalSales)}
                 </p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
                 <SafeIcon name="ShoppingCart" className="w-4 h-4 text-orange-600" />
               </div>
               <div>

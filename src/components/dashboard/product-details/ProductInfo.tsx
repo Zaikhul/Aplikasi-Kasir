@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { Badge } from '@/components/ui/badge'
 import SafeIcon from '@/components/dashboard/common/SafeIcon'
 import type { ProductCategory, ProductStatus } from '@/data/products'
+import { formatCurrency } from '@/lib/currency'
 
 interface ProductInfoProps {
   name: string
@@ -20,17 +21,7 @@ export default function ProductInfo({
   category,
   status,
 }: ProductInfoProps) {
-  const priceLabel = useMemo(() => {
-    try {
-      return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 0,
-      }).format(price)
-    } catch {
-      return `Rp ${price.toLocaleString('id-ID')}`
-    }
-  }, [price])
+  const priceLabel = useMemo(() => formatCurrency(price), [price])
 
   const statusColor = (() => {
     switch (status) {
