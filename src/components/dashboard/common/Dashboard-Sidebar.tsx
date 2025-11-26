@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   Sidebar,
   SidebarContent,
@@ -39,16 +40,16 @@ export default function DashboardSidebar() {
   const { user } = useAuth(false)
   const avatarUrl = user?.name
     ? `https://ui-avatars.com/api/?background=1d4ed8&color=fff&name=${encodeURIComponent(
-        user.name,
-      )}`
+      user.name,
+    )}`
     : 'https://ui-avatars.com/api/?background=1d4ed8&color=fff&name=User'
 
   return (
     <Sidebar variant="inset" className="border-r">
       <SidebarHeader className="border-b px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-            <SafeIcon name="utensils-crossed" className="w-6 h-6 text-primary-foreground" />
+          <div className="h-10 bg-primary rounded-lg flex items-center justify-center">
+            <SafeIcon name="hand-coins" className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-foreground">Kasir Pintar</h1>

@@ -12,9 +12,9 @@ interface DashboardHeaderProps {
   placeholder?: string
 }
 
-export default function DashboardHeader({ 
-  onSearch, 
-  placeholder = 'Search products...' 
+export default function DashboardHeader({
+  onSearch,
+  placeholder = 'Search products...'
 }: DashboardHeaderProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
@@ -40,12 +40,12 @@ export default function DashboardHeader({
   return (
     <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 md:px-6">
       <SidebarTrigger className="md:hidden" />
-      
+
       <form onSubmit={handleSearch} className="flex-1 max-w-2xl mx-auto">
         <div className="relative">
-          <SafeIcon 
-            name="Search" 
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" 
+          <SafeIcon
+            name="Search"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
           />
           <Input
             type="search"

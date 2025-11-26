@@ -2,8 +2,7 @@
 
 import { createElement, useMemo } from 'react';
 import * as LucideIcons from 'lucide-react';
-import { Circle } from 'lucide-react';
-import type { ComponentType } from 'react';
+import { Circle, HelpCircle } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 
 interface SafeIconProps extends LucideProps {
@@ -12,17 +11,26 @@ interface SafeIconProps extends LucideProps {
 
 export default function SafeIcon({ name, ...props }: SafeIconProps) {
   const IconComponent = useMemo(() => {
-    // Try to get the icon from lucide-react
-    const icon = (LucideIcons as any)[name];
-    
-    // If icon exists and is a valid component, return it
-    if (icon && typeof icon === 'function') {
+    if (!name) return Circle;
+
+    const cleanName = name.toString();
+    const normalizedName = cleanName
+      .replace(/[_-]+/g, ' ')
+      .trim()
+      .split(/\s+/)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join('');
+    const icon = (LucideIcons as any)[normalizedName] || (LucideIcons as any)[cleanName];
+    if (icon) {
       return icon;
     }
-    
-    // Otherwise, return fallback
-    console.warn(`Icon "${name}" not found in lucide-react, using fallback`);
-    return Circle;
+    console.warn(
+      `[SafeIcon] Icon not found.\n` +
+      `Original Input: "${name}"\n` +
+      `Converted To: "${normalizedName}"\n` +
+      `Available Icons Sample: ${Object.keys(LucideIcons).slice(0, 3).join(', ')}...`
+    );
+    return HelpCircle;
   }, [name]);
 
   return createElement(IconComponent, props);

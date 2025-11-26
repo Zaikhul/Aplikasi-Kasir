@@ -10,6 +10,8 @@ import SafeIcon from '@/components/dashboard/common/SafeIcon'
 import { uploadApi } from '@/lib/api/upload.api'
 import { normalizeImageSrc, stripApiOrigin } from '@/lib/image'
 
+import { compressImage } from '@/lib/image-compression'
+
 type ProductImageUploadProps = Readonly<{
   mainImage: string
   detailedImages: string[]
@@ -41,9 +43,9 @@ export default function ProductImageUpload({
       return
     }
 
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError('File size must be less than 5MB')
+    // Validate file size (10MB limit for initial selection)
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('File size must be less than 10MB')
       return
     }
 
@@ -51,7 +53,9 @@ export default function ProductImageUpload({
     setUploadError('')
 
     try {
-      const result = await uploadApi.uploadFile(file)
+      // Compress image before upload
+      const compressedFile = await compressImage(file)
+      const result = await uploadApi.uploadFile(compressedFile)
       const imageValue = stripApiOrigin(result.relativePath || result.url)
       onMainImageChange(imageValue)
     } catch (err: unknown) {
@@ -77,9 +81,9 @@ export default function ProductImageUpload({
       return
     }
 
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError('File size must be less than 5MB')
+    // Validate file size (10MB limit for initial selection)
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('File size must be less than 10MB')
       return
     }
 
@@ -87,7 +91,9 @@ export default function ProductImageUpload({
     setUploadError('')
 
     try {
-      const result = await uploadApi.uploadFile(file)
+      // Compress image before upload
+      const compressedFile = await compressImage(file)
+      const result = await uploadApi.uploadFile(compressedFile)
       const imageValue = stripApiOrigin(result.relativePath || result.url)
       if (!detailedImages.includes(imageValue)) {
         onDetailedImagesChange([...detailedImages, imageValue])
@@ -126,7 +132,7 @@ export default function ProductImageUpload({
               ref={mainFileInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
+              // capture="environment" - Removed to allow gallery selection
               onChange={handleMainImageFileChange}
               className="hidden"
               id="mainImageFile"
@@ -185,7 +191,7 @@ export default function ProductImageUpload({
             ref={detailedFileInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
+            // capture="environment" - Removed to allow gallery selection
             onChange={handleDetailedImageFileChange}
             className="hidden"
             id="detailedImageFile"

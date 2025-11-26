@@ -25,12 +25,12 @@ export default function ProductManagementContent() {
       try {
         setLoading(true)
         const searchQuery = router.query.q as string | undefined
-        
+
         const [productsData, statsData] = await Promise.all([
           productsApi.getAll({ search: searchQuery }),
           productsApi.getStats(),
         ])
-        
+
         // Map backend product to frontend IProductModel
         const { normalizeImageSrc } = await import('@/lib/image')
         const mappedProducts = productsData.map((p: any) => ({
@@ -49,7 +49,7 @@ export default function ProductManagementContent() {
           status: p.status || (p.inventory === 0 ? 'Out of Stock' : p.inventory < 10 ? 'Low Stock' : 'In Stock'),
           rating: p.rating || 0,
         }))
-        
+
         setProducts(mappedProducts)
         setFilteredProducts(mappedProducts)
         setStats({
@@ -64,7 +64,7 @@ export default function ProductManagementContent() {
         setLoading(false)
       }
     }
-    
+
     loadProducts()
   }, [router.query.q])
 
