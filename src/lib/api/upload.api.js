@@ -13,13 +13,13 @@ export const uploadApi = {
   uploadFile: async (file) => {
     const formData = new FormData()
     formData.append('file', file)
-    
+
     const response = await apiClient('/upload', {
       method: 'POST',
       body: formData,
       // Don't set Content-Type header, let browser set it with boundary
     })
-    
+
     // Prefer relativePath if available (for Next.js Image optimization)
     if (response.relativePath) {
       return {
@@ -27,7 +27,7 @@ export const uploadApi = {
         url: response.relativePath,
       }
     }
-    
+
     return response
   },
 }

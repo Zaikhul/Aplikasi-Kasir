@@ -43,8 +43,12 @@ export async function compressImage(
                             reject(new Error('Canvas is empty'));
                             return;
                         }
-                        // Create a new File object with the same name but potentially different type/size
-                        const newFile = new File([blob], file.name, {
+                        // Create a new File object with .jpg extension to match the JPEG type
+                        const originalName = file.name;
+                        const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
+                        const newFileName = `${nameWithoutExt}.jpg`;
+
+                        const newFile = new File([blob], newFileName, {
                             type: 'image/jpeg',
                             lastModified: Date.now(),
                         });

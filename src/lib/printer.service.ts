@@ -54,6 +54,7 @@ type BluetoothCharacteristicUUID = number | string
 export interface InvoiceData {
   orderNumber?: string
   orderId?: string
+  userName?: string
   items: Array<{
     productName: string
     quantity: number
@@ -92,7 +93,7 @@ function loadPrinterConfig(): { printers: PrinterConfig[]; activePrinter: string
  */
 async function getActivePrinter(): Promise<PrinterConfig | null> {
   const { printers, activePrinter } = loadPrinterConfig()
-  
+
   if (!activePrinter) {
     return null
   }
@@ -128,6 +129,11 @@ function generateInvoiceCommands(invoice: InvoiceData): number[] {
   commands.push(0x1d, 0x21, 0x11) // Double width and height
   commands.push(...textToBytes('INVOICE\n'))
   commands.push(0x1d, 0x21, 0x00) // Normal size
+
+  // User name - Center aligned
+  if (invoice.userName) {
+    commands.push(...textToBytes(`${invoice.userName}\n`))
+  }
   commands.push(0x1b, 0x61, 0x00) // Left align
 
   // Order number
@@ -139,9 +145,9 @@ function generateInvoiceCommands(invoice: InvoiceData): number[] {
   // Date
   const date = invoice.createdAt
     ? new Date(invoice.createdAt).toLocaleString('id-ID', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      })
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    })
     : new Date().toLocaleString('id-ID')
   commands.push(...textToBytes(`Date: ${date}\n`))
   commands.push(...textToBytes('--------------------------------\n'))
