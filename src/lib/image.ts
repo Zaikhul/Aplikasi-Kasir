@@ -85,9 +85,6 @@ export function normalizeImageSrc(src?: string | null): string {
   const value = stripped
 
   if (value.startsWith('/')) {
-    if (value.startsWith('/uploads/') && apiBase) {
-      return `${apiBase}${value}`
-    }
     return value
   }
 

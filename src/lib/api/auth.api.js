@@ -1,4 +1,4 @@
-import { setToken, clearToken } from '../apiClient'
+import { apiClient, setToken, clearToken } from '../apiClient'
 
 /**
  * Auth API Service
@@ -14,6 +14,7 @@ export const authApi = {
         const response = await fetch('/api/proxy/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({
                 email: email.trim().toLowerCase(),
                 password,
@@ -29,6 +30,13 @@ export const authApi = {
 
         if (data && data.access_token) {
             await setToken(data.access_token)
+
+            // Cache user immediately to avoid race condition with useAuth
+            if (data.user) {
+                const { resetAuthCache } = await import('@/hooks/useAuth')
+                resetAuthCache(data.user)
+            }
+
             return data
         }
         throw new Error('Invalid response from server')
@@ -42,6 +50,7 @@ export const authApi = {
         const response = await fetch('/api/proxy/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({
                 name: userData.name,
                 email: userData.email.trim().toLowerCase(),
