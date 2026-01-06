@@ -84,30 +84,27 @@ export function normalizeImageSrc(src?: string | null): string {
 
   const value = stripped
 
-  // Already a relative path - use as-is
   if (value.startsWith('/')) {
+    if (value.startsWith('/uploads/') && apiBase) {
+      return `${apiBase}${value}`
+    }
     return value
   }
 
-  // Data URI - use as-is
   if (value.startsWith('data:')) {
     return value
   }
 
-  // Try to parse as URL
   try {
     const url = new URL(value)
-    
+
     const hostname = url.hostname.toLowerCase()
     if (proxyableHostSet.has(hostname)) {
       return buildProxyUrl(url)
     }
 
-    // External URL - return as-is (must be in next.config.ts remotePatterns)
     return value
   } catch {
-    // Not a valid URL - might be a relative path without leading slash
-    // or some other format - return as-is
     return value
   }
 }
