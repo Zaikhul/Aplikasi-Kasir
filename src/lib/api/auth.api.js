@@ -1,10 +1,9 @@
-import { apiClient, setToken, clearToken } from '../apiClient'
+import { setToken, clearToken } from '../apiClient'
 
 /**
  * Auth API Service
+ * 
  */
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL
 
 export const authApi = {
     /**
@@ -12,7 +11,7 @@ export const authApi = {
      * POST /auth/login
      */
     login: async (email, password) => {
-        const response = await fetch(`${BACKEND_URL}/auth/login`, {
+        const response = await fetch('/api/proxy/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -40,7 +39,7 @@ export const authApi = {
      * POST /auth/register
      */
     register: async (userData) => {
-        const response = await fetch(`${BACKEND_URL}/auth/register`, {
+        const response = await fetch('/api/proxy/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

@@ -8,7 +8,6 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL
 
-// Disable body parser to allow stream forwarding (essential for file uploads)
 export const config = {
     api: {
         bodyParser: false,
@@ -26,15 +25,13 @@ export default async function handler(
 
     const token = req.cookies.auth_token
 
-    // Forward original headers (important for multipart/form-data boundaries)
     const headers: HeadersInit = {
         ...req.headers as Record<string, string>,
     }
 
-    // Clean up headers that shouldn't be forwarded or cause issues
     delete (headers as any).host
     delete (headers as any).connection
-    delete (headers as any)['content-length'] // Let fetch calculate/manage this
+    delete (headers as any)['content-length']
 
     if (token) {
         headers['Authorization'] = `Bearer ${token}`
@@ -44,7 +41,7 @@ export default async function handler(
         const backendResponse = await fetch(targetUrl, {
             method: req.method,
             headers,
-            // Forward the raw request stream
+
             body: req.method !== 'GET' && req.method !== 'HEAD' ? (req as any) : undefined,
             // @ts-ignore - duplex is needed for streaming bodies in some fetch implementations
             duplex: 'half',
@@ -58,8 +55,6 @@ export default async function handler(
             res.setHeader('Content-Type', contentType)
         }
 
-        // Forward response body
-        // We use arrayBuffer to handle both binary files and JSON robustly
         const arrayBuffer = await backendResponse.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
 
