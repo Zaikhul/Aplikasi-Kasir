@@ -1,37 +1,69 @@
-
 'use client'
 
 import Image from 'next/image'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import SafeIcon from '@/components/dashboard/common/SafeIcon'
-import { uploadApi } from '@/lib/api/upload.api'
-import { normalizeImageSrc, stripApiOrigin } from '@/lib/image'
-
+import { normalizeImageSrc } from '@/lib/image'
 import { compressImage } from '@/lib/image-compression'
 
+/**
+ * Represents either a local file (pending upload) or an already-uploaded URL
+ */
+export type ImageItem =
+  | { type: 'file'; file: File; previewUrl: string }
+  | { type: 'url'; url: string }
+
 type ProductImageUploadProps = Readonly<{
-  mainImage: string
-  detailedImages: string[]
-  onMainImageChange: (imageUrl: string) => void
-  onDetailedImagesChange: (images: string[]) => void
+  /** Already-uploaded main image URL (for edit mode) */
+  mainImageUrl: string
+  /** Local file selected for main image (pending upload) */
+  mainImageFile: File | null
+  /** Array of already-uploaded URLs and local files */
+  detailedImages: ImageItem[]
+  /** Callback when main image file is selected/cleared */
+  onMainImageFileChange: (file: File | null) => void
+  /** Callback when detailed images change */
+  onDetailedImagesChange: (images: ImageItem[]) => void
+  /** Form validation error */
   error?: string
 }>
 
 export default function ProductImageUpload({
-  mainImage,
+  mainImageUrl,
+  mainImageFile,
   detailedImages,
-  onMainImageChange,
+  onMainImageFileChange,
   onDetailedImagesChange,
   error,
 }: Readonly<ProductImageUploadProps>) {
-  const [uploadingMain, setUploadingMain] = useState(false)
-  const [uploadingDetailed, setUploadingDetailed] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  const [processingMain, setProcessingMain] = useState(false)
+  const [processingDetailed, setProcessingDetailed] = useState(false)
   const mainFileInputRef = useRef<HTMLInputElement>(null)
   const detailedFileInputRef = useRef<HTMLInputElement>(null)
+
+  // Create blob URL for main image file preview
+  const mainPreviewUrl = useMemo(() => {
+    if (mainImageFile) {
+      return URL.createObjectURL(mainImageFile)
+    }
+    return null
+  }, [mainImageFile])
+
+  // Cleanup blob URL on unmount or when file changes
+  useEffect(() => {
+    return () => {
+      if (mainPreviewUrl) {
+        URL.revokeObjectURL(mainPreviewUrl)
+      }
+    }
+  }, [mainPreviewUrl])
+
+  // Determine what to show for main image
+  const mainImageDisplay = mainPreviewUrl || (mainImageUrl ? normalizeImageSrc(mainImageUrl) : null)
 
   const handleMainImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -43,32 +75,33 @@ export default function ProductImageUpload({
       return
     }
 
-    // Validate file size (10MB limit for initial selection)
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError('File size must be less than 10MB')
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('File size must be less than 5MB')
       return
     }
 
-    setUploadingMain(true)
+    setProcessingMain(true)
     setUploadError('')
 
     try {
-      // Compress image before upload
+      // Compress image (but don't upload yet)
       const compressedFile = await compressImage(file)
-      const result = await uploadApi.uploadFile(compressedFile)
-      const imageValue = stripApiOrigin(result.relativePath || result.url)
-      onMainImageChange(imageValue)
+      onMainImageFileChange(compressedFile)
     } catch (err: unknown) {
-      console.error('Upload error:', err)
-      const message =
-        err instanceof Error ? err.message : 'Failed to upload image. Please try again.'
+      console.error('Compression error:', err)
+      const message = err instanceof Error ? err.message : 'Failed to process image'
       setUploadError(message)
     } finally {
-      setUploadingMain(false)
+      setProcessingMain(false)
       if (mainFileInputRef.current) {
         mainFileInputRef.current.value = ''
       }
     }
+  }
+
+  const handleRemoveMainImage = () => {
+    onMainImageFileChange(null)
   }
 
   const handleDetailedImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,30 +114,30 @@ export default function ProductImageUpload({
       return
     }
 
-    // Validate file size (10MB limit for initial selection)
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError('File size must be less than 10MB')
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('File size must be less than 5MB')
       return
     }
 
-    setUploadingDetailed(true)
+    setProcessingDetailed(true)
     setUploadError('')
 
     try {
-      // Compress image before upload
+      // Compress image (but don't upload yet)
       const compressedFile = await compressImage(file)
-      const result = await uploadApi.uploadFile(compressedFile)
-      const imageValue = stripApiOrigin(result.relativePath || result.url)
-      if (!detailedImages.includes(imageValue)) {
-        onDetailedImagesChange([...detailedImages, imageValue])
-      }
+      const previewUrl = URL.createObjectURL(compressedFile)
+
+      onDetailedImagesChange([
+        ...detailedImages,
+        { type: 'file', file: compressedFile, previewUrl }
+      ])
     } catch (err: unknown) {
-      console.error('Upload error:', err)
-      const message =
-        err instanceof Error ? err.message : 'Failed to upload image. Please try again.'
+      console.error('Compression error:', err)
+      const message = err instanceof Error ? err.message : 'Failed to process image'
       setUploadError(message)
     } finally {
-      setUploadingDetailed(false)
+      setProcessingDetailed(false)
       if (detailedFileInputRef.current) {
         detailedFileInputRef.current.value = ''
       }
@@ -112,7 +145,19 @@ export default function ProductImageUpload({
   }
 
   const handleRemoveDetailedImage = (index: number) => {
+    const removed = detailedImages[index]
+    // Cleanup blob URL if it's a local file
+    if (removed.type === 'file') {
+      URL.revokeObjectURL(removed.previewUrl)
+    }
     onDetailedImagesChange(detailedImages.filter((_, i) => i !== index))
+  }
+
+  const getDetailedImageSrc = (item: ImageItem): string => {
+    if (item.type === 'file') {
+      return item.previewUrl
+    }
+    return normalizeImageSrc(item.url)
   }
 
   return (
@@ -132,7 +177,7 @@ export default function ProductImageUpload({
               ref={mainFileInputRef}
               type="file"
               accept="image/*"
-              // capture="environment" - Removed to allow gallery selection
+              capture="environment"
               onChange={handleMainImageFileChange}
               className="hidden"
               id="mainImageFile"
@@ -141,12 +186,12 @@ export default function ProductImageUpload({
               type="button"
               variant="outline"
               onClick={() => mainFileInputRef.current?.click()}
-              disabled={uploadingMain}
+              disabled={processingMain}
             >
-              {uploadingMain ? (
+              {processingMain ? (
                 <>
                   <SafeIcon name="Loader2" className="w-4 h-4 animate-spin mr-2" />
-                  Uploading...
+                  Processing...
                 </>
               ) : (
                 <>
@@ -155,19 +200,35 @@ export default function ProductImageUpload({
                 </>
               )}
             </Button>
+            {(mainImageFile || mainImageUrl) && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={handleRemoveMainImage}
+              >
+                <SafeIcon name="X" className="w-4 h-4" />
+              </Button>
+            )}
           </div>
           {(error || uploadError) && (
             <p className="text-sm text-destructive">{error || uploadError}</p>
           )}
+          {mainImageFile && (
+            <Badge variant="secondary" className="text-xs">
+              <SafeIcon name="Clock" className="w-3 h-3 mr-1" />
+              Pending upload
+            </Badge>
+          )}
         </div>
 
-        {mainImage && (
+        {mainImageDisplay && (
           <div
-            className="relative w-full max-w-xs overflow-hidden rounded-lg border bg-muted"
+            className="relative w-full max-w-xs aspect-square overflow-hidden rounded-lg border bg-muted"
             style={{ borderColor: 'hsl(var(--border))' }}
           >
             <Image
-              src={normalizeImageSrc(mainImage)}
+              src={mainImageDisplay}
               alt="Main product"
               fill
               sizes="240px"
@@ -182,7 +243,7 @@ export default function ProductImageUpload({
         <div>
           <Label htmlFor="detailedImageFile">Additional Product Images</Label>
           <p className="text-sm text-muted-foreground mt-1">
-            Add more photos from your gallery or camera.
+            Add more photos.
           </p>
         </div>
 
@@ -191,7 +252,6 @@ export default function ProductImageUpload({
             ref={detailedFileInputRef}
             type="file"
             accept="image/*"
-            // capture="environment" - Removed to allow gallery selection
             onChange={handleDetailedImageFileChange}
             className="hidden"
             id="detailedImageFile"
@@ -201,17 +261,17 @@ export default function ProductImageUpload({
             type="button"
             variant="outline"
             onClick={() => detailedFileInputRef.current?.click()}
-            disabled={uploadingDetailed}
+            disabled={processingDetailed}
           >
-            {uploadingDetailed ? (
+            {processingDetailed ? (
               <>
                 <SafeIcon name="Loader2" className="w-4 h-4 animate-spin mr-2" />
-                Uploading...
+                Processing...
               </>
             ) : (
               <>
                 <SafeIcon name="Upload" className="w-4 h-4 mr-2" />
-                Select photo
+                Add photo
               </>
             )}
           </Button>
@@ -221,11 +281,14 @@ export default function ProductImageUpload({
           <div className="space-y-2">
             <p className="text-sm font-medium">Added Images ({detailedImages.length})</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {detailedImages.map((image, index) => (
-                <div key={`${image}-${index}`} className="relative group">
-                  <div className="relative w-full aspect-square rounded-lg overflow-hidden border bg-muted" style={{ borderColor: 'hsl(var(--border))' }}>
+              {detailedImages.map((item, index) => (
+                <div key={`img-${index}`} className="relative group">
+                  <div
+                    className="relative w-full aspect-square rounded-lg overflow-hidden border bg-muted"
+                    style={{ borderColor: 'hsl(var(--border))' }}
+                  >
                     <Image
-                      src={normalizeImageSrc(image)}
+                      src={getDetailedImageSrc(item)}
                       alt={`Product detail ${index + 1}`}
                       fill
                       sizes="120px"
@@ -241,27 +304,21 @@ export default function ProductImageUpload({
                   >
                     <SafeIcon name="X" className="w-4 h-4" />
                   </Button>
-                  <Badge variant="secondary" className="absolute bottom-1 left-1">
-                    #{index + 1}
-                  </Badge>
+                  {item.type === 'file' ? (
+                    <Badge variant="secondary" className="absolute bottom-1 left-1 text-xs">
+                      <SafeIcon name="Clock" className="w-3 h-3 mr-1" />
+                      Pending
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="absolute bottom-1 left-1">
+                      #{index + 1}
+                    </Badge>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         )}
-      </div>
-
-      {/* Info */}
-      <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
-        <div className="flex gap-3">
-          <SafeIcon name="Info" className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-900 dark:text-blue-100">
-            <p className="font-medium mb-1">Image security</p>
-            <p>
-              We automatically store a secure path for every upload and never expose the backend domain in the interface.
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   )

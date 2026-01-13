@@ -1,72 +1,99 @@
-// Printer configuration type
-interface PrinterConfig {
-  id: string
-  name: string
-  type: 'bluetooth' | 'usb'
-  connected: boolean
-  device?: any
-  lastConnected?: string
+/**
+ * Unified Printer Service Module
+ * Handles direct printing to Bluetooth and USB thermal printers using ESC/POS commands
+ * Consolidated from printer-utils.ts and printer.service.ts
+ */
+
+// ============================================================================
+// Type Definitions
+// ============================================================================
+
+export interface PrinterConfig {
+  id: string;
+  name: string;
+  type: 'bluetooth' | 'usb';
+  connected: boolean;
+  device?: BluetoothDevice | USBDevice;
+  lastConnected?: string;
 }
 
-// Type definitions for Web Bluetooth API
-interface NavigatorWithBluetooth extends Navigator {
-  bluetooth?: Bluetooth
+export interface InvoiceData {
+  orderNumber?: string;
+  orderId?: string;
+  date?: string;
+  userName?: string;
+  items: Array<{
+    name?: string;
+    productName?: string;
+    quantity: number;
+    price: number;
+    total?: number;
+  }>;
+  subtotal: number;
+  tax: number;
+  total: number;
+  paymentMethod: string;
+  createdAt?: string;
+  cashReceived?: number;
+  changeGiven?: number;
 }
 
-interface Bluetooth {
-  requestDevice(options: RequestDeviceOptions): Promise<BluetoothDevice>
+interface PrinterConfigStorage {
+  printers: PrinterConfig[];
+  activePrinter: string | null;
 }
 
-interface RequestDeviceOptions {
-  filters: BluetoothLEScanFilter[]
-  optionalServices?: BluetoothServiceUUID[]
-}
-
-interface BluetoothLEScanFilter {
-  services?: BluetoothServiceUUID[]
-}
-
+// Web Bluetooth API Types
 interface BluetoothDevice extends EventTarget {
-  id: string
-  name?: string
-  gatt?: BluetoothRemoteGATTServer
+  id: string;
+  name?: string;
+  gatt?: BluetoothRemoteGATTServer;
 }
 
 interface BluetoothRemoteGATTServer {
-  connect(): Promise<BluetoothRemoteGATTServer>
-  connected: boolean
-  disconnect(): void
-  getPrimaryService(service: BluetoothServiceUUID): Promise<BluetoothRemoteGATTService>
+  connect(): Promise<BluetoothRemoteGATTServer>;
+  connected: boolean;
+  disconnect(): void;
+  getPrimaryService(service: string): Promise<BluetoothRemoteGATTService>;
 }
 
 interface BluetoothRemoteGATTService {
-  getCharacteristic(characteristic: BluetoothCharacteristicUUID): Promise<BluetoothRemoteGATTCharacteristic>
+  getCharacteristic(characteristic: string): Promise<BluetoothRemoteGATTCharacteristic>;
 }
 
 interface BluetoothRemoteGATTCharacteristic {
-  writeValue(value: BufferSource): Promise<void>
+  writeValue(value: BufferSource): Promise<void>;
 }
 
-type BluetoothServiceUUID = number | string
-type BluetoothCharacteristicUUID = number | string
+// Web USB API Types
+interface USBDevice {
+  opened: boolean;
+  serialNumber?: string;
+  productName?: string;
+  open(): Promise<void>;
+  selectConfiguration(configurationValue: number): Promise<void>;
+  claimInterface(interfaceNumber: number): Promise<void>;
+  transferOut(endpointNumber: number, data: BufferSource): Promise<USBOutTransferResult>;
+}
 
-// Invoice data type
-export interface InvoiceData {
-  orderNumber?: string
-  orderId?: string
-  userName?: string
-  items: Array<{
-    productName: string
-    quantity: number
-    price: number
-  }>
-  subtotal: number
-  tax: number
-  total: number
-  paymentMethod: string
-  createdAt: string
-  cashReceived?: number
-  changeGiven?: number
+interface USBOutTransferResult {
+  bytesWritten: number;
+  status: 'ok' | 'stall' | 'babble';
+}
+
+interface NavigatorWithBluetooth extends Navigator {
+  bluetooth?: {
+    requestDevice(options: {
+      filters: Array<{ services?: string[] }>;
+      optionalServices?: string[];
+    }): Promise<BluetoothDevice>;
+  };
+}
+
+interface NavigatorWithUSB extends Navigator {
+  usb?: {
+    getDevices(): Promise<USBDevice[]>;
+  };
 }
 
 /**
@@ -161,7 +188,7 @@ function generateInvoiceCommands(invoice: InvoiceData): number[] {
 
   // Items
   for (const item of invoice.items) {
-    const itemName = item.productName.substring(0, 20) // Limit to 20 chars
+    const itemName = (item.productName || item.name || 'Unknown Item').substring(0, 20) // Limit to 20 chars
     const qty = item.quantity.toString()
     const price = item.price.toLocaleString('id-ID')
     const subtotal = (item.price * item.quantity).toLocaleString('id-ID')
@@ -219,16 +246,17 @@ function generateInvoiceCommands(invoice: InvoiceData): number[] {
  * Print via Bluetooth
  */
 async function printViaBluetooth(printer: PrinterConfig, data: Uint8Array): Promise<void> {
-  const nav = navigator as NavigatorWithBluetooth
+  const nav = navigator as NavigatorWithBluetooth;
   if (!nav.bluetooth) {
-    throw new Error('Bluetooth is not available')
+    throw new Error('Bluetooth is not available');
   }
 
-  let device: BluetoothDevice | null = null
+  let device: BluetoothDevice | null = null;
 
   // Check if device object is available and connected
-  if (printer.device?.gatt?.connected) {
-    device = printer.device
+  const printerDevice = printer.device as BluetoothDevice | undefined;
+  if (printerDevice?.gatt?.connected) {
+    device = printerDevice;
   } else {
     // Try to reconnect - request device again (browser will show device picker)
     try {

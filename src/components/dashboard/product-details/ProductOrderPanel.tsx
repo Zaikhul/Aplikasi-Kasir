@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import SafeIcon from '@/components/dashboard/common/SafeIcon'
 import { productsApi } from '@/lib/api/products.api'
 import { formatCurrency } from '@/lib/currency'
+import type { ProductStatus } from '@/data/products'
 
 interface ProductOrderPanelProps {
   readonly productId: string
@@ -13,7 +14,7 @@ interface ProductOrderPanelProps {
   readonly onInventoryChange?: (nextInventory: number) => void
 }
 
-function getStatusFromInventory(inventory: number): string {
+function getStatusFromInventory(inventory: number): ProductStatus {
   if (inventory === 0) return 'Out of Stock'
   if (inventory < 10) return 'Low Stock'
   return 'In Stock'
@@ -50,11 +51,9 @@ export default function ProductOrderPanel({
 
     try {
       const nextInventory = inventory + quantity
-      const status = getStatusFromInventory(nextInventory)
       await productsApi.update(productId, {
         inventory: nextInventory,
-        status,
-        isAvailable: status !== 'Out of Stock',
+        isAvailable: nextInventory > 0,
       })
       onInventoryChange?.(nextInventory)
       setQuantity(1)
@@ -109,11 +108,10 @@ export default function ProductOrderPanel({
 
       {feedback && (
         <div
-          className={`mt-3 rounded-lg border px-3 py-2 text-sm ${
-            feedback.type === 'success'
-              ? 'border-green-600 text-green-700'
-              : 'border-destructive text-destructive'
-          }`}
+          className={`mt-3 rounded-lg border px-3 py-2 text-sm ${feedback.type === 'success'
+            ? 'border-green-600 text-green-700'
+            : 'border-destructive text-destructive'
+            }`}
         >
           {feedback.message}
         </div>

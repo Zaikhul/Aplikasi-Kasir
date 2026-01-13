@@ -9,31 +9,17 @@ import StatsCard from '@/components/dashboard/common/StatsCard'
 import SalesChart from '@/components/dashboard/report-analytics/SalesChart'
 import CategoryChart from '@/components/dashboard/report-analytics/CategoryChart'
 import SafeIcon from '@/components/dashboard/common/SafeIcon'
-import { analyticsApi } from '@/lib/api/analytics.api'
+import { analyticsApi, type DashboardStats, type SalesDay } from '@/lib/api/analytics.api'
 
-interface DashboardStats {
-  totalRevenue: number
-  totalOrders: number
-  totalProducts: number
-  averageOrderValue: number
-  topProducts: Array<{ productId: string; name: string; sales: number; quantity: number }>
-  recentOrders: Array<{
-    _id?: string
-    orderNumber?: string
-    total: number
-    paymentMethod: string
-    createdAt: string
-  }>
-  lowStockProducts: Array<{ name: string; inventory: number; status: string }>
-  salesByCategory: Record<string, number>
-  salesByDay: Array<{ date: string; sales: number; orders: number }>
-  paymentSummary: Record<string, number>
+type TopProduct = { productId: string; name: string; sales: number; quantity: number }
+type RecentOrder = {
+  _id?: string
+  orderNumber?: string
+  total: number
+  paymentMethod: string
+  createdAt: string
 }
-
-type TopProduct = DashboardStats['topProducts'][number]
-type RecentOrder = DashboardStats['recentOrders'][number]
-type LowStockProduct = DashboardStats['lowStockProducts'][number]
-type SalesDay = DashboardStats['salesByDay'][number]
+type LowStockProduct = { name: string; inventory: number; status: string }
 
 import { formatCurrency } from '@/lib/currency'
 
@@ -64,14 +50,19 @@ export default function ReportAnalyticsPage() {
           analyticsApi.getCategorySales(),
         ])
         setDashboardStats(stats)
-        setCategorySales(categoryData)
+        // Transform CategorySales[] to Record<string, number>
+        const categoryRecord = categoryData.reduce<Record<string, number>>((acc, item) => {
+          acc[item.category] = item.sales
+          return acc
+        }, {})
+        setCategorySales(categoryRecord)
       } catch (error) {
         console.error('Error loading analytics:', error)
       } finally {
         setLoading(false)
       }
     }
-    
+
     loadAnalytics()
   }, [])
 
@@ -100,20 +91,20 @@ export default function ReportAnalyticsPage() {
   // Transform sales data for chart
   const salesChartData = dashboardStats?.salesByDay
     ? {
-        title: 'Sales Overview',
-        labels: dashboardStats.salesByDay.map((d: SalesDay) =>
-          new Date(d.date).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-          }),
-        ),
-        series: [
-          {
-            name: 'Revenue',
-            data: dashboardStats.salesByDay.map((d: SalesDay) => d.sales || 0),
-          },
-        ],
-      }
+      title: 'Sales Overview',
+      labels: dashboardStats.salesByDay.map((d: SalesDay) =>
+        new Date(d.date).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        }),
+      ),
+      series: [
+        {
+          name: 'Revenue',
+          data: dashboardStats.salesByDay.map((d: SalesDay) => d.sales || 0),
+        },
+      ],
+    }
     : null
 
   return (
@@ -127,8 +118,8 @@ export default function ReportAnalyticsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={handleExport}
             className="gap-2"
@@ -136,8 +127,8 @@ export default function ReportAnalyticsPage() {
             <SafeIcon name="Download" className="w-4 h-4" />
             Export
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={handlePrint}
             className="gap-2"

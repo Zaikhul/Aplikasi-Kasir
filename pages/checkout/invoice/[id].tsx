@@ -25,7 +25,9 @@ interface InvoiceOrder {
   tax: number
   total: number
   paymentMethod: string
-  createdAt: string
+  createdAt?: string
+  cashReceived?: number
+  changeGiven?: number
   meta?: {
     cashReceived?: number
     changeGiven?: number
@@ -98,9 +100,9 @@ function InvoiceContent() {
       { label: 'Total', value: formatCurrency(order.total) },
       ...(order.meta?.cashReceived !== undefined
         ? [
-            { label: 'Cash received', value: formatCurrency(order.meta.cashReceived) },
-            { label: 'Change given', value: formatCurrency(order.meta.changeGiven ?? 0) },
-          ]
+          { label: 'Cash received', value: formatCurrency(order.meta.cashReceived) },
+          { label: 'Change given', value: formatCurrency(order.meta.changeGiven ?? 0) },
+        ]
         : []),
     ]
   }, [order])
@@ -207,9 +209,9 @@ function InvoiceContent() {
                 Date:{' '}
                 {order.createdAt
                   ? new Date(order.createdAt).toLocaleString('id-ID', {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                    })
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  })
                   : 'N/A'}
               </p>
               <p className="text-sm text-muted-foreground capitalize">
@@ -252,9 +254,9 @@ function InvoiceContent() {
               </div>
 
               <div className="flex flex-col gap-3 print:hidden">
-                <Button 
-                  type="button" 
-                  onClick={handlePrint} 
+                <Button
+                  type="button"
+                  onClick={handlePrint}
                   className="gap-2"
                   disabled={printing || !order}
                 >
